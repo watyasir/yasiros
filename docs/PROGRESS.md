@@ -120,7 +120,7 @@
 - [x] Server code runs in Mumbai (`vercel.json` region `bom1`), next to the database; it ran in the US before, adding ~250 ms per database read
 - [x] Sign-in checked from the login token's signature on the server (no extra trip to Supabase); dashboard and check-in read everything in parallel
 - [x] Fixed: `/settings` crashed after adding a tracker; done tasks no longer show due dates; goals with the same name no longer clash
-- [ ] Targets for each tracker are decided with Yasir when Phase 6 is finalized (the season currently uses each tracker's default daily target)
+- [ ] Targets for each tracker are decided with Yasir (the season still uses each tracker's default daily target). Still open: see "Open items" at the end
 
 ## Sign-in rules (20 Oct 2026)
 - [x] Same browser stays signed in (login cookie lasts 400 days and refreshes on each visit)
@@ -228,14 +228,14 @@ Build complete. From here: improvements only.
 - [x] M11 calendar: `&cat=` gives 9 coloured feeds (`X-WR-CALNAME` "Yasir OS · <Name>", `X-APPLE-CALENDAR-COLOR`); no `&cat` = old all-in-one feed. Phases take optional `cal`, with fallback rules checked against the live plan (31 phases). /settings → Calendar lists the 9 webcal links with copy buttons and colour dots; /progress "Subscribe in Calendar" goes there. Feed builder moved to `src/lib/calendar-feed.ts`
 - [x] M5 code: phases take `from`/`until`; on those dates a dated phase replaces the undated one at the same start time; the feeds split weeks into date ranges with `RRULE UNTIL` (checked on the real plan: no doubles, Breakfast shortens to 20 min on exam days). Plan change waits for the deploy
 - [x] M12 gallery code: private bucket `gallery` (25 MB, PNG/JPG/SVG/PDF/WebP) + `gallery_items` with row-level security (migration `…_gallery.sql`, run in Supabase by Claude: success). `POST /api/gallery` with an upload-only key (GALLERY_TOKEN, else HMAC of API_TOKEN): multipart for small files, signed upload link + confirm up to 25 MB; type checked from the file's own bytes; originals stored byte-for-byte. Key saved to `~/Claude/yasiros-gallery-key.txt`. Gallery in the sidebar and phone tabs: category tabs, thumbnail grid, full-size viewer (Fit / Actual size, pinch zoom), Download original, Share (file), Delete with confirm. Demo on 5 made-up images
-- [ ] NEXT (usage limit hit here): M12 live test: 3000 px+ PNG up and back, bytes compared
+- [x] ~~M12 live test: 3000 px+ PNG up and back, bytes compared~~ Done 30 Oct (Local steps item 10: byte-identical)
 - [x] M10 PWA (29 Oct, cloud session): `src/app/manifest.ts` ("Yasir OS", standalone, theme `#f6f8fa`, icons 192/512/maskable 512 in `public/icons/`), apple-touch-icon 180 + `appleWebApp` metadata, hand-written `public/sw.js` (cache-first `/_next/static` + `/icons`, network-first pages with the last copy as fallback, `/offline` page precached with its CSS, sign-out clears saved pages, `?t=` share links never cached; `sw.js` sent no-cache). Checked on /demo in Chromium: worker activates, visited page opens offline, unvisited page shows the offline card
 - [x] M10 sign-in code: /settings → "Sign in on another device" shows an 8-character code (HMAC of user id + minute with SUPABASE_SERVICE_ROLE_KEY; only that minute is stored, in app_metadata). Works once, 10 minutes, only the newest code, 5 wrong tries end it, only ALLOWED_EMAIL. /login → "Have a code?" → server checks it, makes a magic-link token with the admin API, verifies it on that device. 12/12 logic tests pass against a fake admin API; wrong-code message checked on /login at 375 and 1440. knip, hig-doctor, lint, build clean
-  - [ ] Live: Add to Home Screen on the iPhone (icon, name, opens without Safari bars); make a code in /settings on the laptop and sign in with it in the home-screen app; airplane mode → offline page
+  - [x] ~~Live: Add to Home Screen on the iPhone…~~ Moved to "Open items" at the end (one iPhone check for v10 + Decko)
 - [x] M4 check-in matches the day plan (29 Oct, cloud session): new tracker types `time_of_day` (lights out, wake) and `choice` (7 meal slots: Planned / Swapped / Skipped, default Planned), a `group_name` so Meals and Blood pressure (morning + evening, systolic/diastolic) each share one card, and Reading page. All data: migration `20261030000001_day_plan_log.sql` adds the 14 trackers to the existing account. Blank typed numbers aren't saved (no stale BP). Today shows Meals and BP as one row each; season targets and goals skip the new types. /demo/log on fake values. Normal day = 5 actions (evening BP ×2, one swap, page, Done). knip, hig-doctor, lint, build clean; /demo and /demo/log at 1440, 390, 375: no sideways scroll, no phone targets under 44px, no console errors
-  - [ ] Live: run the migration in Supabase **before** this deploys, then open /log on the iPhone (meal names are placeholders: Pre-gym, Breakfast, Lunch, Snack 1, Dinner, Snack 2, Night)
+  - [x] ~~Live: run the migration in Supabase before this deploys~~ Run 30 Oct (Local steps item 1); meal names moved to "Open items"
 - [x] M5 plan change posted (29 Oct): +Exam revision 10:00 Mon–Fri from 2 Nov; +Walk 07:50 and +Leave for exam 09:40 on 17–21 Nov; 31 → 34 phases, nothing else changed
-- [ ] Finish: build, knip, hig-doctor, lint, /demo at 1440 + 375, docs, deploy, live checks
+- [x] ~~Finish: build, knip, hig-doctor, lint, /demo, docs, deploy, live checks~~ Done in the final build (30 Oct); hig-doctor was retired with Apple HIG
 
 
 ## Final build checklist (30 Oct 2026, cloud session): Soft bento + close every queued item
@@ -262,9 +262,9 @@ Baseline: `npm ci`, build, lint, `tsc --noEmit` all clean (30 Oct). M4 + M10 + a
 - [x] 4. Signed in at 1280: `/`, `/winter-arc`, `/board`, `/money`, `/health`, `/gallery`, `/log`, `/settings` load, no console errors, no sideways scroll. Phone size (375): every `/demo` route, no sideways scroll, no target under 44px (Chrome can't emulate 375, so the signed-in phone pass is on the iPhone)
 - [x] 5. `/log`: no "Update pending"; lights out, wake, 7 meals, BP, weight, reading all show. Test check-in (weight 61.4, Breakfast swapped) saved → Overview Diet showed 6/7 with Breakfast swapped; Weight needs 2 days for a trend (as designed). Test check-in deleted afterwards (16 rows, all written by the test; nothing else was logged that day)
 - [x] 6. Today tile shows the weekday shift (12:40–11:00 PM) and "Now: Lights out" at night; M5 exam phases show in the feeds (Exam revision in Build & study, Walk in Gym & walk, Leave for exam in Commute)
-- [ ] 7. Reminder toasts: left to Yasir (answering one is a real decision about a real task)
-- [ ] 8. iPhone: Add to Home Screen + sign in with a code from /settings, airplane mode → offline card (Yasir)
-- [ ] 9. Rename meal slots if needed (Yasir's call)
+- [x] ~~7. Reminder toasts~~ No longer applies: removed in v10 Focus
+- [x] ~~8. iPhone check~~ Moved to "Open items" at the end
+- [x] ~~9. Rename meal slots~~ Moved to "Open items" at the end
 - [x] 10. M12: 3200×2400 PNG (multipart) and 3000×1000 PNG (9 MB, upload link) uploaded; downloads byte-identical (same SHA-256); both test uploads deleted. Wrong key → 401
 - [x] APIs live: /api/tasks 200 (73), /api/claude-jobs 200 (8), /api/day-plan 200, /api/summary 200, no key → 401; /api/money is POST-only (405 on GET, expected). All 9 calendar feeds 200 with the right names and colours, all-in-one feed 200, wrong token 404. Manifest, /sw.js, icons, /offline 200. build, lint, tsc, knip clean
 - Note: `.env.local` `SHARE_TOKEN` isn't the live one (Yasir set his own phrase in Vercel on 26 Oct); feed checks run from the signed-in /settings page
@@ -294,8 +294,8 @@ Baseline before changes: build, lint, tsc, knip all clean.
 - [x] Vercel deploy of 759b238 green; live Overview shows the shift as 1:30–10:30 PM and "Shift at 1:30 PM." in the header
 - [x] Signed in on yasiros.vercel.app (Chrome, 1440): water cups 4 → 3 → 2 → 1 → 0 each saved, first save showed "Day 5 logged. Streak 1."; meal chip Pre-gym → Planned → Skipped, both survive a reload; task tick → "Nice. 31 left." + Undo, task back to To do after a reload (done_at cleared); theme Matcha saved, came back from the database with the cookie cleared, then set back to Candy. No error toasts, no sideways scroll
 - [x] Put back: today's test entry and the theme row deleted (0 entries today, 0 user_prefs rows, as before); this browser's "celebrated today" flag cleared
-- [ ] One oddity, not reproduced: the very first water test showed 3 cups after a reload when 2 were saved; slow step-by-step taps were right every time. Watch for it on the phone
-- [ ] iPhone check (Yasir): home-screen app, Overview fits, cups and meal chips easy to tap, pick a theme and check it shows on the laptop too
+- [x] ~~Water-cup oddity~~ No longer applies: the water cups were removed in v10 Focus
+- [x] ~~iPhone check (v9)~~ Moved to "Open items" at the end (cups and meal chips no longer on the Overview)
 
 ## v10 "Focus" (1 Nov 2026, cloud session)
 Same v9 look; fewer, clearer pieces. Baseline: build, lint, tsc, knip, contrast clean.
@@ -325,4 +325,18 @@ Display name only: repo `yasiros`, `yasiros.vercel.app`, every route and API URL
 
 ### iPhone step (Decko)
 Delete the old home-screen icon, then in Safari open yasiros.vercel.app → Share → Add to Home Screen (Open as Web App on). Only a fresh install picks up the new name, icon and launch screen.
+
+## Open items (2 Nov 2026) — the only things left
+Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc, knip and contrast re-run clean on main; Vercel green for the v10 and Decko commits.
+
+**Mac session (Claude):**
+- [ ] Run `supabase/migrations/20261102000001_task_goals.sql` in the Supabase SQL editor; confirm `tasks.goal_id` and the `tasks_goal` index
+- [ ] Supabase → Authentication → Email Templates → Magic Link: add `<p>Or type this code in the app: {{ .Token }}</p>` (keep the link); send a test email and check the code shows
+- [ ] Live checks, signed in, laptop + phone width: 4 tabs, redirects, Settings (Gallery, share card, Claude's jobs), tab title "Decko" + Bento icon, Today "x of 5" opens /log, Next up tick + Undo survives a reload, Finance "Saving for" lists the 1RK fund, one calendar feed's X-WR-CALNAME says "Decko · <name>"
+- [ ] Work: put 2 or 3 real tasks on their goals with the task sheet's Goal picker; check the cards and Loose tasks
+
+**Yasir:**
+- [ ] iPhone: delete the old home-screen icon, re-add from Safari (Share → Add to Home Screen, Open as Web App on); check the Decko name, Bento icon and launch screen; sign in inside the app with the code from the email; airplane mode → offline card
+- [ ] Meal slot names: the placeholders are Pre-gym, Breakfast, Lunch, Snack 1, Dinner, Snack 2, Night; say the real ones and the Mac session renames them
+- [ ] Season targets: pick a daily target per tracker (sleep, water, steps, study…); the Mac session sets them in Settings
 
