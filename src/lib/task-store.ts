@@ -14,17 +14,21 @@ type TaskRow = {
   note: string | null;
   sort_order: number;
   done_at: string | null;
-  next_steps: string | null;
-  questions: string[] | null;
-  chat_name: string | null;
-  gate_quiet_until: string | null;
+  goal_id?: string | null;
 };
 
-const TASK_COLUMNS = "id, title, area, due_date, status, owner, done_at, note, sort_order, next_steps, questions, chat_name, gate_quiet_until";
+const BASE_COLUMNS = "id, title, area, due_date, status, owner, done_at, note, sort_order";
+/** goal_id comes from migration 20261102000001_task_goals.sql. */
+const TASK_COLUMNS = `${BASE_COLUMNS}, goal_id`;
 
-/** Every task (the Board shows the latest 20 done, with "Show all"). Null = database error. */
+/**
+ * Every task. Before the task-goals migration runs, goal_id doesn't exist (Postgres 42703):
+ * read without it, so every task shows as loose on the Work page. Null = database error.
+ */
 export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
-  const { data, error } = await supabase.from("tasks").select(TASK_COLUMNS).order("created_at").returns<TaskRow[]>();
+  const select = (columns: string) => supabase.from("tasks").select(columns).order("created_at").returns<TaskRow[]>();
+  let { data, error } = await select(TASK_COLUMNS);
+  if (error?.code === "42703") ({ data, error } = await select(BASE_COLUMNS));
   if (error || !data) return null;
   return data.map((t) => ({
     id: t.id,
@@ -36,10 +40,7 @@ export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
     note: t.note,
     order: t.sort_order,
     doneAt: t.done_at,
-    nextSteps: t.next_steps,
-    questions: t.questions ?? [],
-    chatName: t.chat_name,
-    quietUntil: t.gate_quiet_until,
+    goalId: t.goal_id ?? null,
   }));
 }
 

@@ -1,4 +1,3 @@
-import type { ClaudeJob } from "@/lib/claude-jobs";
 import { addDays, type Tracker } from "@/lib/trackers";
 import type { DayPlan } from "@/lib/day-plan";
 import type { DashboardData, SeasonDay } from "@/modules/types";
@@ -7,10 +6,9 @@ import { dueState, type Goal, type Task } from "@/lib/tasks";
 import { toMoneyTile, type MoneySnapshot } from "@/lib/money";
 import { buildBody } from "./body";
 import { buildGoals } from "./goals";
-import { buildArc, fullDate } from "./arc";
-import { daysBetween, headerDate, shortDate } from "./dates";
-import { dailyTarget, todayRows } from "./today";
-import { buildBp, buildCheckInFields, buildConsistency, buildHero, buildMeals, buildPlan, buildSeries, buildStudy, buildWater } from "./extras";
+import { buildArc } from "./arc";
+import { daysBetween, shortDate } from "./dates";
+import { buildBp, buildConsistency, buildFocus, buildHero, buildMeals, buildPlan, buildSeries } from "./extras";
 import { DEFAULT_THEME, type ThemeId } from "@/lib/theme";
 
 /*
@@ -53,12 +51,17 @@ interface BuildInput {
   goalTracked: Map<string, number>;
   /** The latest money snapshot. Null/missing = none pushed yet. */
   money?: MoneySnapshot | null;
-  claudeJobs?: ClaudeJob[];
   /** The saved theme; Candy when none. */
   theme?: ThemeId;
 }
 
 
+
+/** A tracker's daily target, or null when it has none. */
+function dailyTarget(t: Tracker): number | null {
+  if (t.target_period !== "daily" || t.target == null) return null;
+  return Number(t.target);
+}
 
 // ---------------------------------------------------------------- the build
 
@@ -76,7 +79,6 @@ export function buildDashboardData({
   goals,
   goalTracked,
   money,
-  claudeJobs,
   theme,
 }: BuildInput): DashboardData {
   const values = new Map<string, number>();
@@ -118,15 +120,12 @@ export function buildDashboardData({
     weekTarget: workoutTracker?.target_period === "weekly" && workoutTracker.target != null ? Number(workoutTracker.target) : null,
   });
 
-  const todayItems = todayRows(trackers, (t) => valueOn(t, today), (t) => hitOn(t, today));
   const open = tasks.filter((t) => t.status !== "done");
   const overdue = open.filter((t) => dueState(t, today) === "overdue").length;
   const dueToday = open.filter((t) => t.due === today).length;
 
   const loggedDays = new Set(entries.map((e) => e.entry_date));
   const series = buildSeries(trackers, valueOn, bodyChecks, today);
-  const goalTiles = buildGoals(goals, goalTracked, trackers, today);
-  const fund = goalTiles.find((g) => /1\s*rk/i.test(g.name));
   const consistency = buildConsistency(season, trackers, valueOn, today);
 
   return {
@@ -137,40 +136,26 @@ export function buildDashboardData({
     logHref: "/log",
     shareHref: "/progress",
     views: {
-      overview: {
-        title: headerDate(today),
-        subtitle: overviewSubtitle(todayItems.logged, todayItems.rows.length, dueToday, overdue),
-      },
-      arc: {
-        title: season?.name ?? "Winter Arc",
-        subtitle: season
-          ? `${fullDate(season.start_date)} → ${fullDate(addDays(season.start_date, season.length_days - 1))} · ${season.length_days} days`
-          : "No season set up yet",
-      },
-      gallery: { title: "Gallery", subtitle: "Images and files Claude saved from chats" },
-      money: { title: "Money", subtitle: money ? `${money.month} · updated by the finance task` : "Waiting for the first snapshot" },
-      health: { title: "Health", subtitle: "Weight, steps, sleep, blood pressure and workouts" },
-      board: {
-        title: "Board",
+      overview: { title: "", subtitle: "" },
+      health: { title: "Health", subtitle: season ? `Winter Arc · ${season.name}` : "Weight, sleep, workouts, meals and blood pressure" },
+      finance: { title: "Finance", subtitle: money ? `${money.month} · updated by the finance task` : "Waiting for the first snapshot" },
+      work: {
+        title: "Work",
         subtitle: open.length === 0 ? "No open tasks" : `${open.length} open${overdue ? ` · ${overdue} overdue` : ""}${dueToday ? ` · ${dueToday} due today` : ""}`,
       },
+      gallery: { title: "Gallery", subtitle: "Images and files Claude saved from chats" },
     },
-    navBadges: open.length ? { board: String(open.length) } : {},
+    navBadges: open.length ? { work: String(open.length) } : {},
     season: season ? buildSeason(season, today, dayStatus, counts, dailyGoals.length) : null,
     arc: season ? buildArc(season, today, trackers, dailyGoals, hitOn) : null,
     hero: buildHero(season, today, loggedDays, consistency),
     checkedIn: loggedDays.has(today),
     plan: buildPlan(dayPlan, today, nowMinutes),
-    steps: series.steps,
+    focus: buildFocus(trackers, valueOn, today, loggedDays.has(today), workouts.some((w) => w.date === today)),
     sleep: series.sleep,
     meals: buildMeals(trackers, valueOn, today),
-    water: buildWater(trackers, valueOn, today),
-    checkInFields: buildCheckInFields(trackers, valueOn, today),
     bp: buildBp(trackers, valueOn, today),
-    fund: fund ? { name: fund.name, progress: fund.progress, pct: fund.pct, by: fund.by } : null,
-    study: buildStudy(trackers, valueOn, today),
     consistency,
-    today: todayItems.rows,
     money: money ? toMoneyTile(money) : null,
     workoutHref: "/log/workout",
     bodyHref: "/log/body",
@@ -178,20 +163,10 @@ export function buildDashboardData({
     settingsHref: "/settings",
     ...body,
     weight: { unit: "kg", goal: weightGoal, points: series.weight },
-    goals: goalTiles,
+    goals: buildGoals(goals, goalTracked, trackers, today),
     tasks,
     gallery: null,
-    claudeJobs: claudeJobs ?? [],
   };
-}
-
-// The season day lives in the header's Winter Arc chip (v6.1), so it isn't repeated here.
-function overviewSubtitle(logged: number, total: number, dueToday: number, overdue: number): string {
-  const parts: string[] = [];
-  if (dueToday) parts.push(`${dueToday} ${dueToday === 1 ? "task" : "tasks"} due today`);
-  if (overdue) parts.push(`${overdue} overdue`);
-  parts.push(logged === 0 ? "Nothing logged today yet" : `${logged} of ${total} trackers logged today`);
-  return parts.join(" · ");
 }
 
 function buildSeason(

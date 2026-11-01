@@ -3,88 +3,47 @@
 import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { fileNameFor, type GalleryItem, type GalleryMime } from "@/lib/gallery";
-import { canSnooze, GATE_CHOICES, nextMidnightIST, type GateChoice } from "@/lib/gate";
 import { TASK_STATUSES, taskProblem, type NewTask, type TaskStatus } from "@/lib/tasks";
-import { assertValidValue, todayISO } from "@/lib/trackers";
 
-/** A tap on a yes/no Today row: saves today's entry, then sends the dashboard fresh numbers. */
-export async function toggleTodayTracker(trackerId: string, done: boolean): Promise<{ ok: boolean }> {
-  const { supabase, user } = await requireUser();
-  // Row-level security only returns this user's trackers.
-  const { data: tracker } = await supabase.from("trackers").select("id, type").eq("id", trackerId).maybeSingle();
-  if (!tracker || tracker.type !== "checkbox") return { ok: false };
-
-  const { error } = await supabase
-    .from("entries")
-    .upsert(
-      { user_id: user.id, tracker_id: trackerId, entry_date: todayISO(), value: done ? 1 : 0 },
-      { onConflict: "tracker_id,entry_date" },
-    );
-  if (error) return { ok: false };
-  refresh();
-  return { ok: true };
-}
-
-/**
- * One of today's values from an Overview tile (water cups, a meal chip). null clears it
- * (no cups left = nothing logged). Only the user's own trackers, checked like the check-in.
- */
-export async function setTodayEntry(trackerId: string, value: number | null): Promise<{ ok: boolean }> {
-  const { supabase, user } = await requireUser();
-  const { data: tracker } = await supabase.from("trackers").select("id, name, type").eq("id", trackerId).maybeSingle();
-  if (!tracker) return { ok: false };
-  const today = todayISO();
-  if (value === null) {
-    const { error } = await supabase.from("entries").delete().eq("tracker_id", trackerId).eq("entry_date", today);
-    if (error) return { ok: false };
-  } else {
-    try {
-      assertValidValue(tracker, value);
-    } catch {
-      return { ok: false };
-    }
-    const { error } = await supabase
-      .from("entries")
-      .upsert({ user_id: user.id, tracker_id: trackerId, entry_date: today, value }, { onConflict: "tracker_id,entry_date" });
-    if (error) return { ok: false };
-  }
-  refresh();
-  return { ok: true };
-}
-
-/** The columns the Board's sheet saves. Changes from the app are marked as Yasir's. */
-const taskRow = (task: NewTask) => ({
+/** The columns the task sheet saves. Changes from the app are marked as Yasir's. */
+const taskRow = (task: NewTask, withGoal: boolean) => ({
   title: task.title.trim(),
   area: task.area.trim(),
   due_date: task.due || null,
   status: task.status,
   note: task.note.trim() || null,
   owner: task.owner,
+  ...(withGoal ? { goal_id: task.goalId } : {}),
   updated_by: "Yasir",
 });
 
-/** Adds a task from the Board. */
+/**
+ * Runs a save with goal_id, and again without it if the task-goals migration hasn't run yet
+ * (Postgres 42703 "column does not exist"), so the sheet works either way.
+ */
+async function withGoalFallback(save: (withGoal: boolean) => PromiseLike<{ error: { code?: string } | null }>): Promise<{ ok: boolean }> {
+  let { error } = await save(true);
+  if (error?.code === "42703" || error?.code === "PGRST204") ({ error } = await save(false));
+  if (error) return { ok: false };
+  refresh();
+  return { ok: true };
+}
+
+/** Adds a task from the Work page. */
 export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
   if (taskProblem(task)) return { ok: false };
   const { supabase, user } = await requireUser();
-  const { error } = await supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task) });
-  if (error) return { ok: false };
-  refresh();
-  return { ok: true };
+  return withGoalFallback((g) => supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task, g) }));
 }
 
-/** Saves the Board's edit sheet. */
+/** Saves the task sheet. Row-level security limits this to the user's own tasks. */
 export async function updateTask(id: string, task: NewTask): Promise<{ ok: boolean }> {
   if (taskProblem(task)) return { ok: false };
   const { supabase } = await requireUser();
-  // Row-level security limits this to the user's own tasks.
-  const { error } = await supabase.from("tasks").update(taskRow(task)).eq("id", id);
-  if (error) return { ok: false };
-  refresh();
-  return { ok: true };
+  return withGoalFallback((g) => supabase.from("tasks").update(taskRow(task, g)).eq("id", id));
 }
 
-/** Moves a task to another Board column (Done ticks it off). */
+/** Changes a task's status (ticking one off moves it to Done; Undo puts it back). */
 export async function moveTask(id: string, status: TaskStatus): Promise<{ ok: boolean }> {
   if (!TASK_STATUSES.includes(status)) return { ok: false };
   const { supabase } = await requireUser();
@@ -98,34 +57,6 @@ export async function deleteTask(id: string): Promise<{ ok: boolean }> {
   const { supabase } = await requireUser();
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) return { ok: false };
-  refresh();
-  return { ok: true };
-}
-
-/**
- * An answer on the action gate. Done ticks the task off; Doing it now moves it to In progress;
- * Snooze leaves it; Move date sets a new due date. Each one quiets the task until the next
- * midnight in India, and every answer is written to gate_log.
- */
-export async function answerGate(id: string, choice: GateChoice, due?: string): Promise<{ ok: boolean }> {
-  if (!GATE_CHOICES.includes(choice)) return { ok: false };
-  const today = todayISO();
-  if (choice === "move" && !(due && /^\d{4}-\d{2}-\d{2}$/.test(due) && due >= today)) return { ok: false };
-  const { supabase, user } = await requireUser();
-  const { data: task } = await supabase.from("tasks").select("id, due_date").eq("id", id).maybeSingle();
-  if (!task || (choice === "snooze" && task.due_date && !canSnooze(task.due_date, today))) return { ok: false };
-
-  const change = {
-    done: { status: "done" },
-    doing: { status: "doing" },
-    snooze: {},
-    move: { due_date: due },
-  }[choice];
-  const [saved, logged] = await Promise.all([
-    supabase.from("tasks").update({ ...change, gate_quiet_until: nextMidnightIST(today), updated_by: "Yasir" }).eq("id", id),
-    supabase.from("gate_log").insert({ user_id: user.id, task_id: id, choice, new_due: choice === "move" ? due : null }),
-  ]);
-  if (saved.error || logged.error) return { ok: false };
   refresh();
   return { ok: true };
 }

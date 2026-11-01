@@ -20,15 +20,11 @@ export interface Task {
   order: number;
   /** ISO time the task moved to Done, or null. */
   doneAt: string | null;
-  /** For the action gate (src/lib/gate.ts), set by Claude through the API. */
-  nextSteps: string | null;
-  questions: string[];
-  chatName: string | null;
-  /** Answered on the gate: not asked again before this ISO time. */
-  quietUntil: string | null;
+  /** The goal this task is part of (Work page), or null = a loose task. */
+  goalId: string | null;
 }
 
-/** What the Board's add and edit sheet saves. */
+/** What the task sheet saves. */
 export interface NewTask {
   title: string;
   area: string;
@@ -36,6 +32,8 @@ export interface NewTask {
   status: TaskStatus;
   note: string;
   owner: Owner;
+  /** The Work card it's on; null = loose. */
+  goalId: string | null;
 }
 
 /** The Board columns, in order. */
@@ -62,13 +60,6 @@ export function taskProblem(t: NewTask): string | null {
   if (t.note.trim().length > 500) return "Keep the note under 500 characters.";
   if (!OWNERS.includes(t.owner)) return "Pick who's on it.";
   return null;
-}
-
-/** Board order: most important first, then soonest due. Done: latest done first. */
-export function boardOrder(a: Task, b: Task): number {
-  if (a.status === "done" && b.status === "done") return (b.doneAt ?? "").localeCompare(a.doneAt ?? "");
-  if (a.order !== b.order) return b.order - a.order;
-  return (a.due ?? "9999").localeCompare(b.due ?? "9999");
 }
 
 export function dueState(task: Task, today: string): "soon" | "overdue" | undefined {

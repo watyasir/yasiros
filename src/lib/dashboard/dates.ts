@@ -24,12 +24,6 @@ export function weekdayShort(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" }).format(utc(iso));
 }
 
-/** "2026-10-20" -> "Tuesday, 20 October" */
-export function headerDate(iso: string): string {
-  const part = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-GB", { ...o, timeZone: "UTC" }).format(utc(iso));
-  return `${part({ weekday: "long" })}, ${part({ day: "numeric", month: "long" })}`;
-}
-
 /** "Today", "Yesterday", "3 days ago", or "18 Oct" once it's over a week. */
 export function relativeDay(iso: string, today: string): string {
   const days = daysBetween(iso, today);
