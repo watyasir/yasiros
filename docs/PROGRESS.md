@@ -330,7 +330,7 @@ Delete the old home-screen icon, then in Safari open yasiros.vercel.app → Shar
 Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc, knip and contrast re-run clean on main; Vercel green for the v10 and Decko commits.
 
 **Mac session (Claude):**
-- [ ] Run `supabase/migrations/20261102000001_task_goals.sql` in the Supabase SQL editor; confirm `tasks.goal_id` and the `tasks_goal` index
+- [x] Run `supabase/migrations/20261102000001_task_goals.sql` in the Supabase SQL editor; confirm `tasks.goal_id` and the `tasks_goal` index (2 Nov, Mac: both confirmed)
 - [ ] Supabase → Authentication → Email Templates → Magic Link: add `<p>Or type this code in the app: {{ .Token }}</p>` (keep the link); send a test email and check the code shows
 - [ ] Live checks, signed in, laptop + phone width: 4 tabs, redirects, Settings (Gallery, share card, Claude's jobs), tab title "Decko" + Bento icon, Today "x of 5" opens /log, Next up tick + Undo survives a reload, Finance "Saving for" lists the 1RK fund, one calendar feed's X-WR-CALNAME says "Decko · <name>"
 - [ ] Work: put 2 or 3 real tasks on their goals with the task sheet's Goal picker; check the cards and Loose tasks
