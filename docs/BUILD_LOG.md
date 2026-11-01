@@ -369,3 +369,15 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** The iPhone home screen with the Bento icon, and the launch screen.
 **Next:** the v10 Mac steps.
 
+## Session 15 — 2 Nov 2026 — Mac checks for v10 + Decko
+**Goal:** Run the task-goals migration, add a code to the sign-in email, check the live app, and put tasks on goals.
+**What I asked Claude Code to do:** "Do the four Mac-session items in Open items: migration, Magic Link template with the code, live checks at laptop and phone width, and 2–3 tasks on their goals."
+**What got built:** Nothing new. `tasks.goal_id` and its index are live.
+**What broke and how we fixed it:**
+- The email template can't be edited on Supabase's built-in sender: it needs a custom email server (SMTP). The app's own Settings sign-in code covers the iPhone in the meantime.
+- Finance "Saving for" and the Work goal cards were empty because there are no goals yet. The 1RK fund comes from the money snapshot, not from Goals.
+- tsc complained about pages that moved (board → work); the errors came from an old build cache and cleared after a fresh build.
+**What Yasir had to do himself:** nothing yet. Next: choose goals, and an email provider if he wants the code in the email.
+**Screenshot to take:** /work with goal cards, once goals exist.
+**Next:** goals → file tasks under them; meal slot names; season targets.
+
