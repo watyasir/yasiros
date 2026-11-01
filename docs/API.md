@@ -212,13 +212,13 @@ Reply `200`: how many were created and updated, plus each saved task.
 }
 ```
 
-**Action gate fields** (the pop-up before the dashboard, for open tasks due within 3 days): `next_steps` (up to 200 characters), `questions` (a list of up to 5, each up to 140; the card shows 2 and then "More questions in chat"), `chat_name` (the Claude chat with the details, up to 100). Send `null` to clear. Without `next_steps`, the card reads a note written as `Next: call the movers | Chat: "Flat move"`. A negative `sort_order` puts a task first in the gate's queue.
+**Goal (Work page, v10):** `goal_id` puts a task on a goal's card (the goal's `id`, a uuid from the `goals` table); `null` makes it a loose task. A goal id that isn't one of the owner's goals gets `400`. Before migration `20261102000001_task_goals.sql` is run, sending `goal_id` gets `400` ("the task-goals migration hasn't been run yet") and replies leave `goal_id` out; afterwards every reply includes it.
 
 ```json
-{ "external_id": "home-move", "next_steps": "Call two movers for quotes", "questions": ["Weekday or weekend move?"], "chat_name": "Flat move" }
+{ "external_id": "pack-kitchen", "title": "Pack the kitchen", "goal_id": "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f" }
 ```
 
-Each answer on the gate (Done, Doing it now, Snooze to tomorrow, Move date) is saved to the task and logged in the `gate_log` table; the task isn't asked about again until the next midnight in India.
+**Older fields, still accepted:** `next_steps`, `questions` and `chat_name` are saved as before, but no page shows them since v10 (the due-task pop-up is gone).
 
 A body that doesn't fit gets `400` naming the field and list position, e.g. `"tasks[1].status: one of todo, doing, waiting, done."` or `"title: \"learn-sql\" is a new task, so it needs a title."` Nothing is saved when the body is rejected.
 

@@ -296,3 +296,22 @@ Baseline before changes: build, lint, tsc, knip all clean.
 - [x] Put back: today's test entry and the theme row deleted (0 entries today, 0 user_prefs rows, as before); this browser's "celebrated today" flag cleared
 - [ ] One oddity, not reproduced: the very first water test showed 3 cups after a reload when 2 were saved; slow step-by-step taps were right every time. Watch for it on the phone
 - [ ] iPhone check (Yasir): home-screen app, Overview fits, cups and meal chips easy to tap, pick a theme and check it shows on the laptop too
+
+## v10 "Focus" (1 Nov 2026, cloud session)
+Same v9 look; fewer, clearer pieces. Baseline: build, lint, tsc, knip, contrast clean.
+- [x] Nav: 4 tabs Overview / Health / Finance / Work (+ /demo); `/money` → `/finance`, `/board` → `/work`, `/winter-arc` → `/health` (also under /demo). Check-in pill + Settings button on every page; no name or "Y" mark in the header (tab title stays). Gallery, share card and Claude's jobs moved into Settings (and a new `/demo/settings`)
+- [x] Overview: greeting only (no subline, no clock); Today (dark, read-only, 5 things, whole tile opens /log, confetti once a day at 5/5), Next up (tick removes the task, confetti, "Nice. N left." + Undo), Money (left to spend + wallet fan + updated), Winter Arc strip (day, flame, consistency %, 90 dots). Deleted: water cups, score ring, Weight, 1RK fund, Meals, TYBBA, Claude's jobs tiles and their code (setTodayEntry, toggleTodayTracker, live.ts, score.ts)
+- [x] No task pop-ups: reminder toasts, the task card and the gate code removed (lib/gate.ts, answerGate). The Toast stays for Undo and errors
+- [x] Health: Winter Arc hero across the top, 7D / 30D / 90D, Weight ("Body check due" chip + body check link), Sleep, Workouts; Meals (2 cols) + Blood pressure. Steps, Today's trackers and Body check tiles removed
+- [x] Finance: Wallet, This month, 50/20/30 vs target, Top spends, Saving for (₹ goals or "fund"/"saving" names; amounts as ₹42,000 of ₹1,00,000)
+- [x] Work: goal cards (3 / 2 / 1 columns, equal heights), first 3 open tasks + Show all / Show less, tick + confetti + Undo, Active / Done / All, Loose tasks card, task sheet with a Goal picker. Migration `20261102000001_task_goals.sql` (tasks.goal_id + index); before it runs every task shows under Loose tasks and saving falls back without goal_id. `POST /api/tasks` takes `goal_id` (checked against the owner's goals; 400 before the migration); docs/API.md updated. `/api/summary` unchanged
+- [x] App feel: no tap highlight, touch-action manipulation, no selection on nav/buttons/tile headings, no rubber-band, viewport-fit=cover + safe areas, page fade/slide (React ViewTransition, off with reduced motion), tabs prefetched, phone tab bar with a pill above the home indicator, tile skeletons (app/loading.tsx + every Suspense fallback), press feedback, explicit apple-mobile-web-app-capable meta
+- [x] Login inside the app: after "Email me a sign-in link", type the code from the email (`verifyOtp` type "email"); the Settings sign-in code still works
+- [x] Checks: build, lint, tsc, knip, contrast clean. Playwright: every /demo route + /, /login, /offline at 1280 and 390: no sideways scroll, no console errors, no phone target under 44px; tick on Overview and Work → gone + "Nice. 11 left.", Undo → back; all 6 redirects 307
+
+### Mac steps (v10)
+1. Run `supabase/migrations/20261102000001_task_goals.sql` in the Supabase SQL editor.
+2. Supabase → Authentication → Email Templates → Magic Link: add the code to the email, e.g. `<p>Or type this code in the app: {{ .Token }}</p>`, so the installed iPhone app can sign in with it.
+3. Put a few tasks on goals (task sheet → Goal, or `goal_id` through the API) and check the Work cards.
+4. iPhone: re-open the home-screen app: 4 tabs, no pop-ups, Today tile opens the check-in, sign in with the email code inside the app.
+

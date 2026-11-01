@@ -62,15 +62,15 @@ Short version:
 - **Type:** `display` (Bricolage 800) for headings and big numbers, Inter for words, `label` (JetBrains Mono 700, uppercase 11px) for tile headings. All via `next/font`.
 - **Components:** one `Tile` (tones + tilt), one SVG `LineChart`, one `useConfetti`, one `Toast`. No chart or animation library. Files under ~250 lines.
 - **Behaviour:** tilt and glare on mouse devices only; confetti ≤ 120 pieces; one toast at a time with optional Undo; `prefers-reduced-motion` turns motion off; every control a labelled button or link with a 44px target and a visible focus ring; every write optimistic with rollback and an error toast.
-- **Pages:** Overview (the only bento), Winter Arc, Board (full kanban + Claude's jobs), Money, Health, Gallery, each at its own address and again under `/demo`. Tasks due soon show as reminder toasts (never a blocking pop-up).
+- **Pages (v10 Focus):** 4 tabs: Overview `/` (the only bento: Today, Next up, Money, Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards), each again under `/demo`; plus Check-in `/log` and Settings (Gallery, share card, Claude's jobs). `/money`, `/board`, `/winter-arc` redirect. No task pop-ups or reminder toasts; the Toast is only for Undo and errors.
 
 ## Folder layout (target)
 
 ```
 src/
-  app/            routes: / and /winter-arc, /board, /money, /health, /gallery (+ /demo/...), /log, /login, /settings, /progress, /api
+  app/            routes: / and /health, /finance, /work, /gallery (+ /demo/...), /log, /login, /settings, /progress, /api
   components/     shared UI (Tile, LineChart, Chip, Segmented, ...) and the app shell (dashboard/)
-  modules/        one folder per page or tile group (overview, arc, board, money, health, gallery, reminders)
+  modules/        one folder per page (overview, health, finance, work, gallery)
   lib/            supabase client, sheets client, date + rupee helpers
   data/demo/      fake data for /demo
 docs/

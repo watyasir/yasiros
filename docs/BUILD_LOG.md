@@ -343,3 +343,17 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** `/demo` in all three themes at 1280, and the phone Overview with a toast.
 **Next:** the 3 Mac items in PROGRESS.md "Next session".
 
+## Session 21 — 1 Nov 2026 — v10 "Focus"
+**Goal:** Make the app quicker to read at a glance without changing how it looks.
+**What I asked Claude Code to do:** "4 tabs, a calmer Overview, no task pop-ups, Health and Finance tidied, a Work page of goal cards, and make the installed iPhone app feel like an app. Keep the v9 look exactly."
+**What got built:**
+- Four tabs: Overview, Health, Finance, Work. Old addresses still work (they redirect). Gallery, the share card and Claude's jobs now live in Settings.
+- The Overview shows four things: today's 5 to-dos (read-only, tap to check in), the next 3 tasks, money left to spend, and a one-line Winter Arc strip.
+- Work shows each goal as a card with its tasks and progress; tasks without a goal sit in "Loose tasks". Ticking a task makes it disappear, with confetti and Undo.
+- No more pop-ups about due tasks.
+- On the iPhone: no grey tap flashes, no bouncing, smooth fades between tabs, grey tile outlines while a page loads instead of a white screen, and sign-in by typing the email's code inside the app.
+**What broke and how we fixed it:** The summary API Claude's tasks use still reports Winter Arc targets and streaks, so that calculation stayed even though no page shows it now. Old generated route files made type checks fail after pages were deleted; a clean build fixed them. Outside components or sites used: none.
+**What Yasir had to do himself:** Run one migration and add the code to the sign-in email template (PROGRESS.md "Mac steps (v10)").
+**Screenshot to take:** `/demo` and `/demo/work` at 1280, and the phone tab bar.
+**Next:** the Mac steps, then the Decko rebrand.
+

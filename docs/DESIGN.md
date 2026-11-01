@@ -1,6 +1,6 @@
 # Yasir OS: design spec
 
-**Status:** v9 "Playground", 30 Oct 2026. Light only, three themes. This file is the whole spec; the code follows the latest changelog entry (§9). Apple HIG, v6 "Teal and grey" and v8 "Soft bento" are retired.
+**Status:** v10 "Focus" (2 Nov 2026) on the v9 "Playground" look. Light only, three themes. This file is the whole spec; the code follows the latest changelog entry (§9). Apple HIG, v6 "Teal and grey" and v8 "Soft bento" are retired.
 
 ## 1. Look in one paragraph
 
@@ -27,27 +27,29 @@ Type: `display` = Bricolage Grotesque 800 (headings, big numbers); Inter 500/600
 
 ## 3. Layout
 
-- One fluid layout, max 1240px. Top bar from 561px ("Y" mark, page links, Check-in pill); 560px and under a 6-tab bar at the bottom. Every page has its own address and again under `/demo`.
-- **Overview header:** greeting by the hour in India ("Up late" before 5, "Morning" before 12, "Afternoon" before 17, "Evening" before 22, else "Night") + ", Yasir."; one line: weekdays before the shift "Shift at 1:30 PM.", during it "On shift till 10:30 PM.", after "Shift done. Wind down.", Sat/Sun "Weekend off."; a live IST clock and date on the right (hidden on phones).
-- **Overview bento** (the only bento, `bento` utility): desktop 4 columns × 158px rows, gap 14px:
-  `"hero hero tasks money" "hero hero tasks money" "check today weight weight" "fund diet study claude"`. 960px and under: 2 columns. 560px and under: a 2-column widget grid, gap 12px: hero, check-in + today, tasks, money, weight, fund + meals, study + claude. Tiles are written in priority order (no `grid-flow-dense`).
-- Other pages: a 1–3 column grid of Tiles with tones, tops aligned. Board stays a full kanban.
+- One fluid layout, max 1240px. **4 tabs** (v10): Overview `/`, Health `/health`, Finance `/finance`, Work `/work`, the same under `/demo`. Old addresses redirect: `/money` → `/finance`, `/board` → `/work`, `/winter-arc` → `/health`. Gallery (`/gallery`), the share card and Claude's jobs live in Settings.
+- Top bar: the tabs from 561px up, then the Check-in pill (`/log`) and a Settings button on every width. No app name or logo mark in the header (the browser tab title stays). 560px and under: a 4-tab bar at the bottom, a pill on the active tab, above the home indicator.
+- **Overview header:** the greeting only ("Up late" before 5, "Good morning" before 12, "Good afternoon" before 17, "Good evening" before 22, else "Good night", + ", Yasir"). No subline, no clock.
+- **Overview bento** (the only bento, `bento` utility): desktop 4 columns, rows 158px 158px auto, gap 14px: `"today today tasks money" "today today tasks money" "arc arc arc arc"`. 960px and under: 2 columns (today across, then tasks + money, then arc). 560px and under: 1 column. Tiles in priority order (no `grid-flow-dense`).
+- **Health:** the Winter Arc hero across the top; a 7D / 30D / 90D switch; Weight (chip "Body check due" when due), Sleep, Workouts in a row of 3; then Meals (2 columns, planned / swapped / skipped chips) and Blood pressure (1 column).
+- **Finance:** Wallet, This month (spend vs income), 50 / 20 / 30 vs target, Top spends, and **Saving for** (goals in ₹ or with "fund"/"saving" in the name, each with a bar).
+- **Work** (replaces the Board's kanban): goal cards, 3 columns on a laptop, 2 from 1100px, 1 from 700px, cards in a row the same height. Card: "<area> · by <deadline>", the goal, % done + bar, "x of y tasks done", the first 3 open tasks ("Show all N" / "Show less" only when there are more), "+ Add task". Tasks with no goal: a last "Loose tasks" card. Filter Active / Done / All. Tap a title for the task sheet (with a Goal picker).
 
 ## 4. Overview tiles
 
-- **Hero** (dark): Day N / 90, streak with a flame, 90 round dots (30 a row, 15 on phones): full = `dot-on`, partial = half, today = pulsing ring. Hover or drag across: "Day 12 · Fri 6 Nov · full check-in / partial / missed / ahead". Legend + "N days to <finish>".
-- **Next up:** 3 open tasks, overdue first, a round 44px tick. Tick → done, the row slides out, small confetti, toast "Nice. N left." with Undo (reopens it). None left: "All clear." + Board link.
-- **Money:** up to 3 bank cards back to front ("All banks" without per-bank data), 22px apart; hover, focus or tap fans them. Total counts up once, then "Updated 8:45 PM".
-- **Check-in:** 6 water cups on the Water tracker (0.5 L each, 3 L target). Cup N = N × 0.5 L; tapping the last full cup takes one away; each tap saves. "Finish check-in" → /log, or "✓ Logged today". The first save of the day: big confetti + "Day N logged. Streak X." (once a day per device).
-- **Today:** score ring + % + word (<40 "Getting started", ≥40 "Good pace", ≥75 "Almost there", 100 "Perfect day"; weights in src/lib/score.ts), the shift, "Now: <phase>".
-- **Weight:** latest kg, the 14-day change (▲/▼ in ink), a scrub chart resting on the last point ("58.2 kg · 12 Nov"). Under 2 days: "Log 2 days to see the trend".
-- **1RK fund:** % with a growing bar and "₹X of ₹Y · date", else an empty state.
-- **Meals:** 7 chips; a tap toggles planned ↔ skipped and saves; "5/7"; all 7 planned → confetti + "All meals in. Diet day done.".
-- **TYBBA:** study hours this week, items due and the next one, Board link. **Claude's jobs:** up to 3 jobs, status dot + word, last run or schedule.
+- **Today** (dark hero, read-only; the whole tile opens `/log`): "3 of 5 done", a bar, a chip per item (✓ when done), "Left: Meals, Reading", "Next: <phase> at <time>" from the day plan. 5 of 5: one confetti burst a day per device. **The 5 items and their trackers:**
+  1. **Check-in**: anything saved today.
+  2. **Workout**: the `workout` tracker ticked today, or a workout session logged today (walk days use the same tick).
+  3. **Meals**: every meal slot (`choice` trackers in the Meals group) has a value today.
+  4. **Revision**: the `study` tracker above 0 minutes today.
+  5. **Reading**: the `reading-page` tracker logged today.
+- **Next up:** 3 open tasks, overdue first, a round 44px tick. Tick → the task leaves the list at once (no strikethrough), small confetti, toast "Nice. N left." with Undo (puts it back). None left: "All clear." + Work link.
+- **Money:** left to spend (big, counts up once), the wallet of up to 3 bank cards back to front (hover, focus or tap fans them), "Updated 8:45 PM".
+- **Winter Arc strip** (full width, short; opens Health): Day X / 90, streak flame, average consistency %, the 90 days as a thin row of dots (two rows on phones), today pulsing.
 
 ## 5. Interaction and motion
 
-Tilt (max 2.5°) + glare + 4px lift on mouse devices only; touch uses `:active` scale .96. Confetti ≤ 120 pieces on a canvas that removes itself. One toast at a time, bottom centre, 4.5 s, optional Undo. Reminder toasts (tasks due within 3 days, at most 3, one at a time on phones) open the task card to answer. No animation library. `prefers-reduced-motion` turns off tilt, confetti, count-ups and pulses. Every write is optimistic, rolls back with an error toast, and never double-saves.
+Tilt (max 2.5°) + glare + 4px lift on mouse devices only; touch uses `:active` scale .96. Confetti ≤ 120 pieces on a canvas that removes itself. One toast at a time, bottom centre, 4.5 s, optional Undo; it's only for Undo and errors (no task pop-ups since v10). Tab changes fade and slide the page (React `<ViewTransition>`). No animation library. `prefers-reduced-motion` turns off tilt, confetti, count-ups and pulses. Every write is optimistic, rolls back with an error toast, and never double-saves.
 
 ## 6. Accessibility
 
@@ -59,10 +61,11 @@ Plain, short, friendly. Empty states say what to do next; never fake numbers on 
 
 ## 8. Phone
 
-Designed at 390px first; no sideways scroll; the check-in stays under a minute.
+Installed as a home-screen app it should feel like one: no tap highlight, `touch-action: manipulation` on controls (pinch zoom kept), no text selection on nav, buttons and tile headings, no rubber-band scroll, safe-area insets with `viewport-fit=cover`, tile-shaped skeletons while a page loads (never a blank white screen), press feedback on every control. Sign-in inside the app: type the code from the sign-in email (or the code from Settings on a signed-in device). Designed at 390px first; no sideways scroll; the check-in stays under a minute.
 
 ## 9. Changelog (Claude Code: apply the latest entry if the code doesn't match)
 
+- **v10 Focus, 2 Nov 2026.** Same v9 look (tokens, tones, fonts, tilt, confetti, Undo toast, charts, wallet fan, count-up, flame, 3 themes); fewer, clearer pieces. 4 tabs (Overview, Health, Finance, Work) + Check-in + Settings; no name or mark in the header. Overview: greeting only; Today (5 things, read-only), Next up, Money, Winter Arc strip. Removed from Overview: water cups, score ring, Weight, 1RK fund, Meals, TYBBA and Claude's jobs tiles. No due-task pop-ups or reminder toasts. Health gets the Winter Arc hero, Meals and the "Body check due" chip; Steps, Today's trackers and Body check tiles removed. Finance adds "Saving for". Work replaces the kanban with goal cards (tasks.goal_id). Gallery, the share card and Claude's jobs moved to Settings. App feel for the installed iPhone app, skeleton loading, page transitions, and sign-in with the email code.
 - **v9, 30 Oct 2026: "Playground".** Three themes (Candy, Matcha, Sunset) as `--th-*` variables mapped by `@theme inline`; switch in /settings (saved in `user_prefs`, cookie + head script so there's no flash; falls back to Candy). Bricolage display type and mono labels. Overview: greeting header with the shift line and IST clock, a colour per tile, live tiles (task tick + Undo, water cups, meal chips, score ring, fanning wallet, scrub charts, the 90-dot hero) with confetti and toasts. The rest of the app uses the same Tile tones. v8 names renamed (peach → pop, blue → accent-soft, blue-text → accent, sub → soft, surface → page).
 - **v8, 30 Oct 2026: "Soft bento".** Replaces v6 everywhere. Tokens in §2, layout in §3. Overview becomes the bento (hero, next up, money, check-in, today, weight, 1RK fund, diet, TYBBA study, Claude's jobs); Winter Arc, Board, Money, Health and Gallery are their own pages with a top bar and phone tab bar (the sidebar, phone home, header chip, Habits and In-progress tiles are gone). One `Tile`, one `LineChart`. The blocking action gate becomes reminder toasts. Apple HIG skills, hig-doctor and the v6 mockups removed.
 
