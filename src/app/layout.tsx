@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "A personal life dashboard with a 90-day Winter Arc season.",
   // Home-screen app on iPhone (the manifest is src/app/manifest.ts).
   appleWebApp: { capable: true, title: "Yasir OS", statusBarStyle: "default" },
+  // Written out too: iOS still reads the older apple-mobile-web-app-capable tag for "open as an app".
+  other: { "apple-mobile-web-app-capable": "yes" },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
@@ -24,6 +26,8 @@ export const viewport: Viewport = {
   // Candy's page colour; the theme script swaps it for the chosen theme's.
   themeColor: THEME_BG[DEFAULT_THEME],
   colorScheme: "light",
+  // Edge to edge on the iPhone; pages pad themselves with the safe-area insets.
+  viewportFit: "cover",
 };
 
 /**

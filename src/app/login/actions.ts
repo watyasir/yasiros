@@ -66,3 +66,24 @@ export async function signInWithCode(_prev: CodeState, form: FormData): Promise<
   }
   redirect("/");
 }
+
+/**
+ * The code in the sign-in email, typed into the app (an installed iPhone web app doesn't share
+ * Safari's sign-in, so the email's link would sign in Safari, not the app). Needs the email
+ * template to show {{ .Token }} (docs/PROGRESS.md, v10 Mac steps). Only ALLOWED_EMAIL gets in.
+ */
+export async function verifyEmailCode(_prev: CodeState, form: FormData): Promise<CodeState> {
+  const email = String(form.get("email") ?? "").trim();
+  const token = String(form.get("token") ?? "").replace(/\s/g, "");
+  if (!/^\d{6,10}$/.test(token)) return { status: "error", message: "Type the code from the email (numbers only)." };
+  const wrong: CodeState = { status: "error", message: "That code is wrong or has expired. Send a new email and try again." };
+  if (!isAllowedEmail(email)) return wrong;
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+  if (error || !isAllowedEmail(data.user?.email)) {
+    await supabase.auth.signOut({ scope: "local" });
+    return wrong;
+  }
+  redirect("/");
+}

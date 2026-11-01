@@ -12,18 +12,18 @@ import { formatRupees } from "@/lib/format";
 const CARD = ["bg-card", "bg-card/75", "bg-card/50"];
 
 /**
- * The wallet: up to 3 bank cards stacked back to front ("All banks" while the snapshot has no
- * banks). Hover, focus or tap fans them apart. The total counts up once, then "Updated 8:45 PM".
+ * Money at a glance: what's left to spend this month (big, counts up once), the wallet of up to
+ * 3 bank cards back to front ("All banks" while the snapshot has no banks; hover, focus or tap
+ * fans them), and when it was updated.
  */
 export function MoneyTile() {
   const { data } = useDashboard();
   const money = data.money;
-  const href = viewHref(data.basePath, "money");
+  const href = viewHref(data.basePath, "finance");
   const [fanned, setFanned] = useState(false);
   const banks = money ? money.accounts.filter((a) => a.kind !== "card").slice(0, 3) : [];
   const cards = banks.length ? banks.map((b) => ({ name: b.name, amount: b.balance })) : money ? [{ name: "All banks", amount: money.spendable }] : [];
-  const total = banks.length ? banks.reduce((n, b) => n + b.balance, 0) : (money?.spendable ?? 0);
-  const counted = useCountUp(total);
+  const counted = useCountUp(money?.spendable ?? 0);
 
   if (!money) {
     return (
@@ -34,6 +34,10 @@ export function MoneyTile() {
   }
   return (
     <Tile title="Money" href={href} tone="money" area="money" tilt>
+      <div className="flex flex-col gap-0.5">
+        <span className="display text-[36px] leading-none">{formatRupees(Math.round(counted))}</span>
+        <span className="text-xs font-semibold text-soft">left to spend</span>
+      </div>
       <button
         type="button"
         aria-expanded={fanned}
@@ -43,7 +47,7 @@ export function MoneyTile() {
         onMouseLeave={() => setFanned(false)}
         onFocus={() => setFanned(true)}
         onBlur={() => setFanned(false)}
-        className="relative min-h-[160px] w-full flex-1 cursor-pointer rounded-item border-0 bg-transparent p-0 text-left text-ink"
+        className="relative min-h-[130px] w-full flex-1 cursor-pointer rounded-item border-0 bg-transparent p-0 text-left text-ink"
       >
         {cards.map((c, i) => {
           // The last card is the front one. Stacked: 22px apart (each name shows). Fanned: 48px apart, slightly turned.
@@ -61,10 +65,7 @@ export function MoneyTile() {
           );
         })}
       </button>
-      <div className="flex flex-col gap-0.5">
-        <span className="display text-[32px] leading-none">{formatRupees(Math.round(counted))}</span>
-        <span className="text-xs text-soft">Updated {money.updated}</span>
-      </div>
+      <span className="text-xs text-soft">Updated {money.updated}</span>
     </Tile>
   );
 }

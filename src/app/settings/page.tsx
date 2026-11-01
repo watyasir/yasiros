@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { SheetSkeleton } from "@/components/Skeleton";
 import { SettingsForm } from "@/components/settings/SettingsForm";
 import { requireUser } from "@/lib/auth";
+import { JOB_COLUMNS } from "@/lib/claude-jobs";
 import { shareToken } from "@/lib/share-store";
 import { weekStart } from "@/lib/dashboard/dates";
 import { loadTrackers } from "@/lib/tracker-store";
@@ -13,7 +15,7 @@ export const metadata: Metadata = { title: "Settings · Yasir OS" };
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<p className="p-6 text-center text-[15px] text-soft">Loading settings…</p>}>
+    <Suspense fallback={<SheetSkeleton label="Loading settings" />}>
       <Settings />
     </Suspense>
   );
@@ -21,10 +23,12 @@ export default function SettingsPage() {
 
 async function Settings() {
   const { supabase } = await requireUser();
-  const [trackers, season, theme] = await Promise.all([
+  const [trackers, season, theme, jobs] = await Promise.all([
     loadTrackers(supabase),
     supabase.from("seasons").select("start_date, targets").eq("is_active", true).maybeSingle<{ start_date: string; targets: Record<string, number> }>(),
     loadTheme(supabase),
+    // Not fatal: no jobs yet = the section's empty note.
+    supabase.from("claude_jobs").select(JOB_COLUMNS).order("next_run", { ascending: true, nullsFirst: false }).order("name"),
   ]);
   if (!trackers || season.error) {
     return <p className="p-6 text-center text-[15px] text-danger">Couldn&apos;t load your settings. Refresh to try again.</p>;
@@ -37,6 +41,7 @@ async function Settings() {
       actions={{ saveSeason, addTracker, resetTestData, makeSignInCode, saveTheme }}
       theme={theme}
       calendarPath={calendarPath()}
+      jobs={(jobs.data ?? []).map((j) => ({ name: j.name, schedule: j.schedule, status: j.status, lastRun: j.last_run, nextRun: j.next_run }))}
     />
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import { Suspense } from "react";
+import { SheetSkeleton } from "@/components/Skeleton";
 import { CheckIn } from "@/components/checkin/CheckIn";
 import { MoreLogs } from "@/components/checkin/MoreLogs";
 import { currentOwner, requireUser } from "@/lib/auth";
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: "Check-in · Yasir OS" };
 
 export default function LogPage() {
   return (
-    <Suspense fallback={<p className="p-6 text-center text-[15px] text-soft">Loading your check-in…</p>}>
+    <Suspense fallback={<SheetSkeleton label="Loading your check-in" />}>
       <TodayCheckIn />
     </Suspense>
   );

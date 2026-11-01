@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { SheetSkeleton } from "@/components/Skeleton";
 import { BodyCheckForm } from "@/components/body/BodyCheckForm";
 import { requireUser } from "@/lib/auth";
 import { loadBodyChecks, loadWeightGoal } from "@/lib/body-store";
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Body check · Yasir OS" };
 
 export default function BodyPage() {
   return (
-    <Suspense fallback={<p className="p-6 text-center text-[15px] text-soft">Loading your body check…</p>}>
+    <Suspense fallback={<SheetSkeleton label="Loading your body check" />}>
       <BodyCheck />
     </Suspense>
   );

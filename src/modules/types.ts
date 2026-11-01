@@ -1,5 +1,3 @@
-import type { ClaudeJob } from "@/lib/claude-jobs";
-import type { GateChoice } from "@/lib/gate";
 import type { GalleryItem } from "@/lib/gallery";
 import type { ThemeId } from "@/lib/theme";
 import type { Tone } from "@/lib/tones";
@@ -12,8 +10,11 @@ export type { Owner, Task };
   (src/data/demo); from Phase 3 the real dashboard fills it from Supabase.
 */
 
-/** Each view has its own address: / (overview), /winter-arc, /board, /money, /health, /gallery (and the same under /demo). */
-export type ViewId = "overview" | "arc" | "board" | "money" | "health" | "gallery";
+/**
+ * Each view has its own address: / (overview), /health, /finance, /work (the 4 tabs) and /gallery
+ * (opened from Settings), and the same under /demo.
+ */
+export type ViewId = "overview" | "health" | "finance" | "work" | "gallery";
 
 /** One day's value on a line chart. */
 export interface Point {
@@ -38,24 +39,6 @@ export interface Account {
   transactions?: { label: string; date: string; amount: number }[];
 }
 
-/** One row in the Today checklist (desktop) and Focus list (phone). */
-export interface TodayItem {
-  label: string;
-  /** Right-hand text: the area on the demo, today's value on the real dashboard. */
-  area: string;
-  done: boolean;
-  /** Real dashboard: a yes/no tracker the row saves when tapped. */
-  trackerId?: string;
-  /** Real dashboard: number trackers open the check-in instead of toggling. */
-  href?: string;
-}
-
-/** Saves a tap on a Today row. Only the real dashboard passes one; the demo just flips the box. */
-export type ToggleTodayAction = (trackerId: string, done: boolean) => Promise<{ ok: boolean }>;
-
-/** Saves one of today's values from an Overview tile; null clears it. Only the real dashboard passes one. */
-export type SetEntryAction = (trackerId: string, value: number | null) => Promise<{ ok: boolean }>;
-
 /** Saves task changes. Only the real dashboard passes these; the demo changes stay on the page. */
 /** Reads and deletes gallery files. Only the real dashboard passes these; the demo uses data.gallery. */
 export interface GalleryActions {
@@ -68,8 +51,6 @@ export interface TaskActions {
   update: (id: string, task: NewTask) => Promise<{ ok: boolean }>;
   move: (id: string, status: TaskStatus) => Promise<{ ok: boolean }>;
   remove: (id: string) => Promise<{ ok: boolean }>;
-  /** An answer on the action gate (also logged). `due` only for "move". */
-  gate: (id: string, choice: GateChoice, due?: string) => Promise<{ ok: boolean }>;
 }
 
 /*
@@ -132,26 +113,23 @@ export interface DashboardData {
     /** The shift phase in minutes after midnight (India); null on a day off. */
     shiftStart: number | null;
     shiftEnd: number | null;
+    /** The next phase today: "Revision at 10:00 AM". null = nothing left today. */
+    next: string | null;
   } | null;
-  /** Last 90 days (Health toggles 14 / 30 / 90). */
-  steps: Point[];
+  /**
+   * Today's 5 things (Overview "Today" tile), from today's check-in data (DESIGN.md §4 has the
+   * mapping): check-in logged, workout or walk, all 7 meals logged, study/revision, reading.
+   */
+  focus: { label: string; done: boolean }[];
   /** Hours: wake time minus lights out, else the Sleep tracker. */
   sleep: Point[];
   /** Today's meal slots. status = the logged option ("Planned", "Swapped", "Skipped"), null = not logged. */
-  meals: { name: string; status: string | null; trackerId?: string }[];
-  /** Today's water in litres (the cups on the check-in tile). null = no Water tracker. */
-  water: { trackerId?: string; litres: number | null; target: number; step: number } | null;
-  /** Check-in fields filled today, for the score. `water` = water is one of the filled ones. */
-  checkInFields: { filled: number; total: number; water: boolean };
+  meals: { name: string; status: string | null }[];
   /** Today's readings, "118/76". */
   bp: { label: string; value: string | null }[];
-  /** The goal whose name has "1RK" in it. null = no such goal yet. */
-  fund: { name: string; progress: string; pct: number; by: string } | null;
-  /** null = no Study tracker. */
-  study: { todayMin: number | null; weekMin: number; dailyTarget: number | null; page: number | null } | null;
   /** Winter Arc: 0-100 per season day so far. */
   consistency: Point[];
-  /** The Winter Arc page (DESIGN.md v6.1). null = no season set up. */
+  /** Winter Arc targets and streaks per tracker, for GET /api/summary (not shown on a page since v10). null = no season. */
   arc: {
     /** "26 Oct 2026 → 23 Jan 2027" */
     rangeLabel: string;
@@ -165,7 +143,6 @@ export interface DashboardData {
     /** % of tracker targets hit in each season week. null = week not started yet. */
     weeks: (number | null)[];
   } | null;
-  today: TodayItem[];
   money: {
     month: string;
     updated: string;
@@ -206,13 +183,12 @@ export interface DashboardData {
   goalsHref: string;
   /** The shareable Winter Arc card (/progress or /demo/progress). */
   shareHref: string;
-  /** Season, trackers and reset. null on the demo (no settings to change). */
-  settingsHref: string | null;
-  goals: { name: string; progress: string; pct: number; by: string; tone: Tone }[];
+  /** /settings, or /demo/settings (Gallery, Claude's jobs, about the themes). */
+  settingsHref: string;
+  /** `saving` = a money goal (unit ₹, or "fund"/"saving" in the name): Finance's "Saving for". */
+  goals: { id: string; name: string; area: string; deadline: string | null; progress: string; pct: number; by: string; tone: Tone; saving: boolean }[];
   /** Open tasks plus the ones done in the last two weeks. */
   tasks: Task[];
   /** The demo's gallery. null on the real dashboard: the gallery loads when it's opened. */
   gallery: GalleryItem[] | null;
-  /** Claude's scheduled tasks, beside the Board. */
-  claudeJobs: ClaudeJob[];
 }

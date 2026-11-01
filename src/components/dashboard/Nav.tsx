@@ -5,74 +5,82 @@ import { Icon, type IconName } from "@/components/Icon";
 import type { ViewId } from "@/modules/types";
 import { useDashboard } from "./DashboardContext";
 
-const NAV: { id: ViewId; label: string; short: string; path: string; icon: IconName }[] = [
-  { id: "overview", label: "Overview", short: "Home", path: "", icon: "grid" },
-  { id: "arc", label: "Winter Arc", short: "Arc", path: "/winter-arc", icon: "snowflake" },
-  { id: "board", label: "Board", short: "Board", path: "/board", icon: "board" },
-  { id: "money", label: "Money", short: "Money", path: "/money", icon: "rupee" },
-  { id: "health", label: "Health", short: "Health", path: "/health", icon: "heart" },
-  { id: "gallery", label: "Gallery", short: "Gallery", path: "/gallery", icon: "image" },
+/** The 4 tabs (v10). Gallery is a page too, opened from Settings, so it has no tab. */
+const TABS: { id: ViewId; label: string; path: string; icon: IconName }[] = [
+  { id: "overview", label: "Overview", path: "", icon: "grid" },
+  { id: "health", label: "Health", path: "/health", icon: "heart" },
+  { id: "finance", label: "Finance", path: "/finance", icon: "rupee" },
+  { id: "work", label: "Work", path: "/work", icon: "board" },
 ];
+const PATHS: Record<ViewId, string> = { overview: "", health: "/health", finance: "/finance", work: "/work", gallery: "/gallery" };
 
-/** A view's address: "/board", "/demo/board", "/" or "/demo". */
-export const viewHref = (base: string, id: ViewId) => `${base}${NAV.find((n) => n.id === id)!.path}` || "/";
+/** A view's address: "/work", "/demo/work", "/" or "/demo". */
+export const viewHref = (base: string, id: ViewId) => `${base}${PATHS[id]}` || "/";
 
-/** Brand, the page links and Check-in, from 561px up. On the phone only the brand shows; the tab bar has the links. */
+/** The Check-in and Settings buttons, on every page and every width. */
+function Actions() {
+  const { data } = useDashboard();
+  return (
+    <div className="ml-auto flex items-center gap-2">
+      <Link href={data.logHref} prefetch className="press flex min-h-11 items-center rounded-full bg-accent-soft px-4 text-sm font-semibold text-ink no-underline hover:brightness-95">
+        Check-in
+      </Link>
+      <Link
+        href={data.settingsHref}
+        prefetch
+        aria-label="Settings"
+        className="press grid size-11 place-items-center rounded-full border border-line bg-card text-ink no-underline shadow-tile hover:bg-fill"
+      >
+        <Icon name="gear" size={18} strokeWidth={2} />
+      </Link>
+    </div>
+  );
+}
+
+/** Top of every page: the 4 tabs from 561px up (the phone has the tab bar), then Check-in and Settings. */
 export function TopBar() {
   const { data, view } = useDashboard();
   return (
-    <header className="flex flex-wrap items-center gap-x-5 gap-y-3">
-      <Link href={viewHref(data.basePath, "overview")} prefetch className="flex min-h-11 items-center gap-2.5 text-xl display tracking-[-0.01em] text-ink no-underline">
-        <span aria-hidden="true" className="grid size-8 place-items-center rounded-item bg-pop font-mono text-sm font-bold shadow-tile">
-          Y
-        </span>
-        Yasir OS
-      </Link>
-      <nav aria-label="Pages" className="hidden flex-1 flex-wrap gap-1 min-[561px]:flex">
-        {NAV.map((n) => (
+    <header className="no-select flex items-center gap-3">
+      <nav aria-label="Pages" className="hidden flex-wrap gap-1 min-[561px]:flex">
+        {TABS.map((t) => (
           <Link
-            key={n.id}
-            href={viewHref(data.basePath, n.id)}
+            key={t.id}
+            href={viewHref(data.basePath, t.id)}
             prefetch
-            aria-current={view === n.id ? "page" : undefined}
-            className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold no-underline ${
-              view === n.id ? "border border-line bg-card text-ink shadow-tile" : "text-soft hover:text-ink"
+            aria-current={view === t.id ? "page" : undefined}
+            className={`press flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold no-underline ${
+              view === t.id ? "border border-line bg-card text-ink shadow-tile" : "text-soft hover:text-ink"
             }`}
           >
-            {n.label}
-            {n.id === "board" && data.navBadges.board && <span className="font-mono text-xs text-soft">{data.navBadges.board}</span>}
+            {t.label}
+            {t.id === "work" && data.navBadges.work && <span className="font-mono text-xs text-soft">{data.navBadges.work}</span>}
           </Link>
         ))}
       </nav>
-      <Link
-        href={data.logHref}
-        prefetch
-        className="ml-auto hidden min-h-11 items-center rounded-full bg-accent-soft px-4 text-sm font-semibold text-ink no-underline hover:brightness-95 min-[561px]:flex press"
-      >
-        Check-in
-      </Link>
+      <Actions />
     </header>
   );
 }
 
-/** Phone (560px and under): the page links as a tab bar at the bottom of the screen. */
+/** Phone (560px and under): the 4 tabs at the bottom, above the home indicator, a pill on the active one. */
 export function TabBar() {
   const { data, view } = useDashboard();
   return (
-    <nav aria-label="Pages" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card pb-[env(safe-area-inset-bottom)] min-[561px]:hidden">
-      <ul className="m-0 grid list-none grid-cols-6 p-0">
-        {NAV.map((n) => (
-          <li key={n.id}>
+    <nav aria-label="Pages" className="no-select fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur min-[561px]:hidden">
+      <ul className="m-0 grid list-none grid-cols-4 px-[env(safe-area-inset-left)] p-0">
+        {TABS.map((t) => (
+          <li key={t.id}>
             <Link
-              href={viewHref(data.basePath, n.id)}
+              href={viewHref(data.basePath, t.id)}
               prefetch
-              aria-current={view === n.id ? "page" : undefined}
-              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-semibold no-underline ${view === n.id ? "text-ink" : "text-soft"}`}
+              aria-current={view === t.id ? "page" : undefined}
+              className={`press flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-semibold no-underline ${view === t.id ? "text-ink" : "text-soft"}`}
             >
-              <span className={`grid h-7 w-11 place-items-center rounded-full ${view === n.id ? "bg-pop" : ""}`}>
-                <Icon name={n.icon} size={18} strokeWidth={2} />
+              <span className={`grid h-7 w-14 place-items-center rounded-full transition-colors ${view === t.id ? "bg-pop" : ""}`}>
+                <Icon name={t.icon} size={18} strokeWidth={2} />
               </span>
-              {n.short}
+              {t.label}
             </Link>
           </li>
         ))}

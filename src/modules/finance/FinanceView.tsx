@@ -17,27 +17,63 @@ const SPLIT: { key: keyof Money["split"]; label: string; tone: Tone }[] = [
   { key: "savings", label: "Savings", tone: "ok" },
 ];
 
-/** The Money page: the wallet stack (tap an account), spend vs income, the 50/20/30 split, top spends. */
-export function MoneyView() {
+/**
+ * Finance (v10, was Money): the wallet stack (tap an account), this month's spend vs income, the
+ * 50/20/30 split against its targets, top spends, and "Saving for": the saving goals with their bars.
+ */
+export function FinanceView() {
   const { money } = useDashboard().data;
-  if (!money) {
-    return (
-      <Tile title="Money">
-        <EmptyNote>Your accounts, cards and monthly split show here once the finance task sends its first snapshot.</EmptyNote>
-      </Tile>
-    );
-  }
   return (
     <div className="grid items-start gap-4 min-[861px]:grid-cols-2">
-      <Tile title={`Wallet · ${money.month}`} tone="money" aside={<span className="text-xs text-soft">Updated {money.updated}</span>}>
-        <WalletStack accounts={money.accounts} spendable={money.spendable} savedThisMonth={money.income - money.spent} />
-      </Tile>
-      <Tile title="This month">
-        <SpendVsIncome money={money} />
-        <SplitBars split={money.split} />
-        {money.categories.length > 0 && <TopCategories categories={money.categories} />}
-      </Tile>
+      {money ? (
+        <>
+          <Tile title={`Wallet · ${money.month}`} tone="money" aside={<span className="text-xs text-soft">Updated {money.updated}</span>}>
+            <WalletStack accounts={money.accounts} spendable={money.spendable} savedThisMonth={money.income - money.spent} />
+          </Tile>
+          <div className="grid min-w-0 gap-4">
+            <Tile title="This month">
+              <SpendVsIncome money={money} />
+            </Tile>
+            <Tile title="50 / 20 / 30 vs target">
+              <SplitBars split={money.split} />
+            </Tile>
+          </div>
+          {money.categories.length > 0 && (
+            <Tile title="Top spends">
+              <TopCategories categories={money.categories} />
+            </Tile>
+          )}
+        </>
+      ) : (
+        <Tile title="Wallet">
+          <EmptyNote>Your accounts, cards and monthly split show here once the finance task sends its first snapshot.</EmptyNote>
+        </Tile>
+      )}
+      <SavingTile />
     </div>
+  );
+}
+
+/** Saving goals (a ₹ unit, or "fund"/"saving" in the name), each with its progress bar. */
+function SavingTile() {
+  const { goals, goalsHref } = useDashboard().data;
+  const saving = goals.filter((g) => g.saving);
+  return (
+    <Tile title="Saving for" href={goalsHref} tone="fund">
+      {saving.length === 0 && <EmptyNote>No saving goals yet. Add one in Goals with ₹ as its unit (like a 1RK fund).</EmptyNote>}
+      {saving.map((g) => (
+        <div key={g.id} className="flex flex-col gap-1.5">
+          <div className="flex justify-between gap-2 text-sm">
+            <span className="font-semibold">{g.name}</span>
+            <span className="text-right font-semibold">{g.pct}%</span>
+          </div>
+          <ProgressBar pct={g.pct} tone={g.pct >= 100 ? "ok" : "accent"} label={`${g.name}: ${g.pct}%`} />
+          <span className="text-xs text-soft">
+            {g.progress} · {g.by}
+          </span>
+        </div>
+      ))}
+    </Tile>
   );
 }
 
@@ -61,8 +97,7 @@ function SpendVsIncome({ money }: { money: Money }) {
 /** Needs / wants / savings as % of income, each with a marker at its target. */
 function SplitBars({ split }: { split: Money["split"] }) {
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
-      <span className="text-sm font-semibold">Split vs target</span>
+    <div className="flex flex-col gap-2">
       {SPLIT.map(({ key, label, tone }) => {
         const { actual, target } = split[key];
         const width = Math.max(0, Math.min(100, actual));
@@ -92,8 +127,7 @@ function SplitBars({ split }: { split: Money["split"] }) {
 
 function TopCategories({ categories }: { categories: Money["categories"] }) {
   return (
-    <div className="flex flex-col border-t border-line pt-2.5">
-      <span className="text-sm font-semibold">Top spends</span>
+    <div className="flex flex-col">
       <ul className="m-0 list-none p-0">
         {categories.map((c) => (
           <li key={c.name} className="flex justify-between gap-2 border-b border-line py-1.5 text-sm last:border-b-0">

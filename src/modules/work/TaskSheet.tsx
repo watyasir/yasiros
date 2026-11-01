@@ -4,18 +4,18 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { OWNERS, TASK_COLUMNS, taskProblem, type NewTask, type Owner, type Task, type TaskStatus } from "@/lib/tasks";
 
-/** Editing a task, or adding one to a column. */
-export type SheetTarget = { task?: Task; status: TaskStatus };
+/** Editing a task, or adding one (on a goal's card, or loose). */
+export type SheetTarget = { task?: Task; status: TaskStatus; goalId?: string | null };
 
 const fieldClass = "min-h-11 w-full rounded-xl border border-line bg-card px-3 text-[15px] text-ink placeholder:text-soft sm:min-h-9 sm:text-[13px]";
 const labelClass = "flex flex-col gap-1 text-xs font-semibold text-soft";
 
 /**
- * One sheet for adding and editing: title, note, area, due date, who's on it, column.
+ * One sheet for adding and editing: title, note, area, due date, who's on it, goal, status.
  * A bottom sheet on the phone, a centred panel on the laptop. Esc or Cancel closes it.
  */
 export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: () => void }) {
-  const { addTask, updateTask, deleteTask } = useDashboard();
+  const { data, addTask, updateTask, deleteTask } = useDashboard();
   const { task } = target;
   const [form, setForm] = useState<NewTask>({
     title: task?.title ?? "",
@@ -24,6 +24,7 @@ export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: (
     due: task?.due ?? null,
     owner: task?.owner ?? "Me",
     status: target.status,
+    goalId: task?.goalId ?? target.goalId ?? null,
   });
   const [problem, setProblem] = useState<string | null>(null);
   const ref = useRef<HTMLDialogElement>(null);
@@ -92,7 +93,18 @@ export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: (
           </div>
         </fieldset>
         <label className={labelClass}>
-          Column
+          Goal
+          <select value={form.goalId ?? ""} onChange={(e) => set("goalId", e.target.value || null)} className={`${fieldClass} cursor-pointer`}>
+            <option value="">No goal (loose task)</option>
+            {data.goals.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={labelClass}>
+          Status
           <select value={form.status} onChange={(e) => set("status", e.target.value as TaskStatus)} className={`${fieldClass} cursor-pointer`}>
             {TASK_COLUMNS.map((c) => (
               <option key={c.status} value={c.status}>

@@ -3,7 +3,6 @@
 import { useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Tile } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
-import { viewHref } from "@/components/dashboard/Nav";
 import { addDays, shortDate } from "@/lib/trackers";
 import type { HeroDay } from "@/modules/types";
 
@@ -25,16 +24,15 @@ const dayLabel = (iso: string) => `${new Intl.DateTimeFormat("en-GB", { weekday:
  * Winter Arc at a glance (dark hero): Day N / 90, the streak with a small flame, and 90 round
  * dots (30 a row, 15 on phones): full check-in filled, partial half-filled, today with a pulsing
  * ring. Hover, drag or arrow keys across the dots: the line under them reads that day.
- * On the Winter Arc page itself (`onPage`) the heading isn't a link.
+ * Full width at the top of Health (v10).
  */
-export function HeroTile({ onPage = false }: { onPage?: boolean }) {
-  const { data, checkedIn } = useDashboard();
-  const hero = data.hero;
-  const href = onPage ? undefined : viewHref(data.basePath, "arc");
+export function HeroTile() {
+  const { data } = useDashboard();
+  const { hero, checkedIn } = data;
   const [picked, setPicked] = useState<number | null>(null);
   if (!hero) {
     return (
-      <Tile title="Winter Arc" href={href} tone="hero" area={onPage ? undefined : "hero"} tilt={!onPage}>
+      <Tile title="Winter Arc" tone="hero">
         <p className="m-0 text-sm text-hero-soft">Set the start date in Settings to begin the 90 days.</p>
       </Tile>
     );
@@ -61,11 +59,8 @@ export function HeroTile({ onPage = false }: { onPage?: boolean }) {
   return (
     <Tile
       title="Winter Arc"
-      href={href}
       tone="hero"
-      area={onPage ? undefined : "hero"}
-      tilt={!onPage}
-      className="min-h-[300px] min-[561px]:min-h-0"
+      className="min-h-[260px]"
       aside={
         streak > 0 && (
           <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold">

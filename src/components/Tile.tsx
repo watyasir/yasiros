@@ -57,7 +57,7 @@ export function Tile({
       {...tiltProps}
       className={`relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-tile p-4 shadow-tile sm:p-5 ${tilt ? "tilt" : ""} ${tones[tone]} ${className}`}
     >
-      <div className="flex min-h-6 items-center justify-between gap-2">
+      <div className="no-select flex min-h-6 items-center justify-between gap-2">
         <h2 className={`label m-0 ${tone === "hero" ? "text-hero-soft" : "text-soft"}`}>
           {href ? (
             <Link href={href} prefetch className="-m-2 inline-flex min-h-11 items-center gap-1 rounded-item p-2 text-inherit no-underline hover:underline">

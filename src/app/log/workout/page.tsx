@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { SheetSkeleton } from "@/components/Skeleton";
 import { WorkoutForm } from "@/components/body/WorkoutForm";
 import { requireUser } from "@/lib/auth";
 import { loadWorkouts } from "@/lib/body-store";
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Workout · Yasir OS" };
 
 export default function WorkoutPage({ searchParams }: { searchParams: Promise<{ repeat?: string }> }) {
   return (
-    <Suspense fallback={<p className="p-6 text-center text-[15px] text-soft">Loading your workouts…</p>}>
+    <Suspense fallback={<SheetSkeleton label="Loading your workouts" />}>
       <WorkoutLog searchParams={searchParams} />
     </Suspense>
   );

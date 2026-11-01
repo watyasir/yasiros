@@ -2,59 +2,46 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Chip } from "@/components/Chip";
 import { Tile } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { viewHref } from "@/components/dashboard/Nav";
-import { useToast } from "@/components/Toast";
-import { centreOf, useConfetti } from "@/components/useConfetti";
-import { shortDate } from "@/lib/trackers";
 import type { Task } from "@/lib/tasks";
-import { OwnerChip } from "@/modules/board/OwnerChip";
+import { DueChip } from "@/modules/work/DueChip";
+import { OwnerChip } from "@/modules/work/OwnerChip";
+import { useTick } from "@/modules/work/useTick";
 
 const SLIDE_MS = 280;
 
 /**
- * The next 3 open tasks: overdue first, then by due date, then the Board's order. The round
- * button ticks one off (saved like a move to Done on the Board): the row slides out, a small
+ * The next 3 open tasks: overdue first, then by due date, then importance. The round button ticks
+ * one off (moved to Done): the row slides out of the list at once (no strikethrough), a small
  * confetti burst, and a toast with Undo (which reopens it where it was).
  */
 export function NextUpTile() {
-  const { data, tasks, moveTask } = useDashboard();
-  const toast = useToast();
-  const confetti = useConfetti();
+  const { data, tasks } = useDashboard();
+  const tickTask = useTick();
   const [leaving, setLeaving] = useState<string[]>([]);
   const today = data.todayISO;
   const open = tasks.filter((t) => t.status !== "done");
   const next = [...open]
     .sort((a, b) => Number(!overdue(a, today)) - Number(!overdue(b, today)) || (a.due ?? "9999").localeCompare(b.due ?? "9999") || b.order - a.order)
     .slice(0, 3);
-  const boardHref = viewHref(data.basePath, "board");
+  const workHref = viewHref(data.basePath, "work");
 
   const tick = (t: Task, button: HTMLElement) => {
     if (leaving.includes(t.id)) return;
-    const before = t.status;
     setLeaving((l) => [...l, t.id]);
-    confetti({ count: 40, from: centreOf(button) });
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setTimeout(
-      () => {
-        moveTask(t.id, "done");
-        setLeaving((l) => l.filter((id) => id !== t.id));
-        const left = open.length - 1;
-        toast({ text: left === 0 ? "Nice. All clear." : `Nice. ${left} left.`, undo: () => moveTask(t.id, before) });
-      },
-      reduced ? 0 : SLIDE_MS,
-    );
+    tickTask(t, button, SLIDE_MS);
+    setTimeout(() => setLeaving((l) => l.filter((id) => id !== t.id)), SLIDE_MS + 50);
   };
 
   return (
-    <Tile title="Next up" href={boardHref} tone="tasks" area="tasks" tilt aside={open.length > 0 && <span className="label text-soft">{open.length} open</span>}>
+    <Tile title="Next up" href={workHref} tone="tasks" area="tasks" tilt aside={open.length > 0 && <span className="label text-soft">{open.length} open</span>}>
       {next.length === 0 ? (
         <div className="flex flex-1 flex-col justify-center gap-2">
           <p className="display m-0 text-[28px]">All clear.</p>
-          <Link href={boardHref} prefetch className="flex min-h-11 items-center text-sm font-semibold text-accent">
-            Open the Board →
+          <Link href={workHref} prefetch className="flex min-h-11 items-center text-sm font-semibold text-accent">
+            Open Work →
           </Link>
         </div>
       ) : (
@@ -97,11 +84,3 @@ export function NextUpTile() {
 }
 
 const overdue = (t: Task, today: string) => t.due != null && t.due < today;
-
-/** "! Overdue", "Today" or the date: words, not colour alone. */
-function DueChip({ task, today }: { task: Task; today: string }) {
-  if (!task.due) return null;
-  if (task.due < today) return <Chip tone="danger">! Overdue</Chip>;
-  if (task.due === today) return <Chip tone="warn">Today</Chip>;
-  return <Chip>{shortDate(task.due)}</Chip>;
-}

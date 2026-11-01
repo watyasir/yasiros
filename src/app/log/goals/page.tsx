@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { SheetSkeleton } from "@/components/Skeleton";
 import { GoalsForm } from "@/components/goals/GoalsForm";
 import { requireUser } from "@/lib/auth";
 import { buildGoals } from "@/lib/dashboard/goals";
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: "Goals · Yasir OS" };
 
 export default function GoalsPage() {
   return (
-    <Suspense fallback={<p className="p-6 text-center text-[15px] text-soft">Loading your goals…</p>}>
+    <Suspense fallback={<SheetSkeleton label="Loading your goals" />}>
       <Goals />
     </Suspense>
   );

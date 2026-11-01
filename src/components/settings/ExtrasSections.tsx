@@ -1,10 +1,35 @@
 "use client";
 
-import { EmptyNote } from "@/components/EmptyNote";
-import { Tile } from "@/components/Tile";
+import Link from "next/link";
+import { Group } from "@/components/FormGroup";
 import { timeAgo, useNow } from "@/components/useNow";
-import { useDashboard } from "@/components/dashboard/DashboardContext";
-import type { JobStatus } from "@/lib/claude-jobs";
+import type { ClaudeJob, JobStatus } from "@/lib/claude-jobs";
+
+/*
+  /settings (and /demo/settings) since v10: links to the Gallery and the share card, and Claude's
+  scheduled jobs. They left the tabs to keep the app to 4 pages.
+*/
+
+/** Gallery and the Winter Arc share card. */
+export function MoreSection({ galleryHref, shareHref }: { galleryHref: string; shareHref: string }) {
+  const row = "press flex min-h-[52px] items-center justify-between gap-3 text-[17px] text-ink no-underline";
+  return (
+    <Group title="More">
+      <Link href={galleryHref} prefetch className={row}>
+        Gallery
+        <span aria-hidden="true" className="text-soft">
+          →
+        </span>
+      </Link>
+      <Link href={shareHref} prefetch className={row}>
+        Winter Arc share card
+        <span aria-hidden="true" className="text-soft">
+          →
+        </span>
+      </Link>
+    </Group>
+  );
+}
 
 /** Status dot + word (never colour alone). */
 const STATUS: Record<JobStatus, { dot: string; label: string }> = {
@@ -15,37 +40,30 @@ const STATUS: Record<JobStatus, { dot: string; label: string }> = {
   paused: { dot: "bg-line-strong", label: "Paused" },
 };
 
-/**
- * Claude's scheduled tasks, beside the Board and kept apart from Yasir's tasks: own tile,
- * Claude-orange marker, no drag or edit. Claude reports them through /api/claude-jobs.
- */
-export function ClaudeJobsPanel() {
-  const jobs = useDashboard().data.claudeJobs;
+/** Claude's scheduled jobs, as Claude reports them through /api/claude-jobs: status, schedule, last and next run. */
+export function ClaudeJobsSection({ jobs }: { jobs: ClaudeJob[] }) {
   const now = useNow();
   return (
-    <Tile title="Claude's scheduled tasks" aside={<span aria-hidden="true" className="size-2.5 rounded-full bg-claude" />} className="self-start">
-      <p className="m-0 -mt-1 text-xs text-soft">Run by Claude on a timer. Not on your Board.</p>
-      {jobs.length === 0 && <EmptyNote>None reported yet. Claude adds them through the API (POST /api/claude-jobs).</EmptyNote>}
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {jobs.map((j) => (
-          <li key={j.name} className="flex flex-col gap-1 rounded-item border border-line bg-fill px-3 py-2.5">
-            <span className="flex items-start justify-between gap-2">
-              <span className="min-w-0 text-sm leading-snug font-semibold">{j.name}</span>
-              <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
-                <span aria-hidden="true" className={`size-2 rounded-full ${STATUS[j.status].dot}`} />
-                {STATUS[j.status].label}
-              </span>
+    <Group title="Claude's jobs">
+      {jobs.length === 0 && <p className="m-0 py-3 text-[15px] text-soft">None reported yet. Claude adds them through POST /api/claude-jobs.</p>}
+      {jobs.map((j) => (
+        <div key={j.name} className="flex flex-col gap-1 py-3">
+          <span className="flex items-start justify-between gap-2">
+            <span className="min-w-0 text-[15px] leading-snug font-semibold">{j.name}</span>
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold">
+              <span aria-hidden="true" className={`size-2 rounded-full ${STATUS[j.status].dot}`} />
+              {STATUS[j.status].label}
             </span>
-            {j.schedule && <span className="text-xs text-soft">{j.schedule}</span>}
-            {now != null && (
-              <span className="flex flex-wrap gap-x-3 font-mono text-xs text-soft">
-                <span>Last run {timeAgo(j.lastRun, now)}</span>
-                {j.nextRun && <span>Next {timeAgo(j.nextRun, now)}</span>}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </Tile>
+          </span>
+          {j.schedule && <span className="text-xs text-soft">{j.schedule}</span>}
+          {now != null && (
+            <span className="flex flex-wrap gap-x-3 font-mono text-xs text-soft">
+              <span>Last run {timeAgo(j.lastRun, now)}</span>
+              {j.nextRun && <span>Next {timeAgo(j.nextRun, now)}</span>}
+            </span>
+          )}
+        </div>
+      ))}
+    </Group>
   );
 }
