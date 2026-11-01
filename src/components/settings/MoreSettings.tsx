@@ -1,13 +1,43 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/Button";
 import { StatusMessages, type Status } from "@/components/body/Sheet";
 import { Group } from "@/components/FormGroup";
 import { CALENDARS } from "@/lib/calendar";
+import type { ClaudeJob } from "@/lib/claude-jobs";
+import { ClaudeJobsPanel } from "./ClaudeJobsPanel";
 import type { SettingsActions } from "./SettingsForm";
 
-/* /settings: the sign-in code, the calendar feeds and Reset test data. */
+/* /settings: more pages (Gallery, share card), Claude's jobs, the sign-in code, the calendar feeds and Reset test data. */
+
+// ---------------------------------------------------------------- More pages and Claude's jobs
+
+const row = "flex min-h-[52px] items-center justify-between gap-3 py-1.5 text-[17px] text-ink no-underline";
+
+/** Pages that have no tab (v10): the Gallery and the shareable Winter Arc card, plus Claude's scheduled tasks. */
+export function MoreSection({ jobs }: { jobs: ClaudeJob[] }) {
+  return (
+    <>
+      <Group id="more" title="More">
+        <Link href="/gallery" prefetch className={row}>
+          Gallery
+          <span aria-hidden="true" className="text-soft">
+            →
+          </span>
+        </Link>
+        <Link href="/progress" prefetch className={row}>
+          Winter Arc share card
+          <span aria-hidden="true" className="text-soft">
+            →
+          </span>
+        </Link>
+      </Group>
+      <ClaudeJobsPanel jobs={jobs} />
+    </>
+  );
+}
 
 // ---------------------------------------------------------------- Sign-in code
 
@@ -35,7 +65,7 @@ export function SignInCodeSection({ make }: { make: SettingsActions["makeSignInC
       <Group id="signin-code" title="Sign in on another device">
         <div className="flex flex-col gap-2 py-3">
           <span className="text-[15px] text-soft">
-            For the home-screen app on your iPhone: on its sign-in page, tap &ldquo;Have a code?&rdquo; and type this code.
+            For the home-screen app on your iPhone: on its sign-in page, tap &ldquo;Have a code from Settings?&rdquo; and type this code.
           </span>
           {code && (
             <div role="status" className="flex flex-col gap-1 rounded-2xl bg-fill-strong p-3">

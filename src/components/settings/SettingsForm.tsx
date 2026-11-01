@@ -7,9 +7,10 @@ import { ToastProvider } from "@/components/Toast";
 import { fieldClass, StatusMessages, type Status } from "@/components/body/Sheet";
 import { Field, Group } from "@/components/FormGroup";
 import { parseNumber, type SaveResult } from "@/lib/body";
+import type { ClaudeJob } from "@/lib/claude-jobs";
 import type { ThemeId } from "@/lib/theme";
 import { AppearanceSection } from "./AppearanceSection";
-import { CalendarSection, ResetSection, SignInCodeSection } from "./MoreSettings";
+import { CalendarSection, MoreSection, ResetSection, SignInCodeSection } from "./MoreSettings";
 import { SEASON_DAYS, seasonProblem, TRACKER_TYPES, trackerProblem, type SeasonInput, type TrackerInput } from "@/lib/settings";
 import { AREA_ORDER, formatDayLabel, type Tracker, type TrackerArea, type TrackerType } from "@/lib/trackers";
 
@@ -37,6 +38,7 @@ export function SettingsForm({
   actions,
   calendarPath,
   theme,
+  jobs,
 }: {
   trackers: Tracker[];
   /** The active season, if there is one. */
@@ -48,6 +50,8 @@ export function SettingsForm({
   calendarPath: string | null;
   /** The saved theme (Candy until one is picked). */
   theme: ThemeId;
+  /** Claude's scheduled tasks. */
+  jobs: ClaudeJob[];
 }) {
   return (
     <ToastProvider>
@@ -59,6 +63,7 @@ export function SettingsForm({
           </Link>
         </header>
         <AppearanceSection theme={theme} save={actions.saveTheme} />
+        <MoreSection jobs={jobs} />
         <SeasonSection trackers={trackers} season={season} defaultStart={defaultStart} save={actions.saveSeason} />
         <NewTrackerSection add={actions.addTracker} />
         <CalendarSection path={calendarPath} />

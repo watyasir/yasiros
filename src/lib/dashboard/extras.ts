@@ -4,11 +4,11 @@ import { addDays, clockLabel, type Tracker } from "@/lib/trackers";
 import { FULL_DAY } from "@/lib/score";
 import type { DashboardData, HeroDay, Point } from "@/modules/types";
 import type { SeasonRow } from "./build";
-import { daysBetween, shortDate, weekStart } from "./dates";
+import { daysBetween, shortDate } from "./dates";
 
 /*
-  The Overview pieces (v9): Winter Arc hero, today's plan, the three line charts, meals, water,
-  study, blood pressure and the daily consistency score. Pure, like build.ts.
+  The Overview and Health pieces: Winter Arc hero, today's plan, the weight and sleep charts, meals,
+  blood pressure, the Today tile's five checks and the daily consistency score. Pure, like build.ts.
 */
 
 /** How far back the charts go (Health's longest toggle). */
@@ -60,12 +60,14 @@ export function buildPlan(plan: DayPlan | null, today: string, nowMinutes: numbe
   const phases = late ? phasesFor(plan, addDays(today, -1)) : todays;
   const at = late ? nowMinutes + 1440 : nowMinutes;
   const now = phases.find((p) => p.start <= at && at < p.end) ?? null;
+  const next = phases.find((p) => p.start > at) ?? null;
 
   const shift = todays.filter((p) => p.cal === "shift");
   const weekend = ["sat", "sun"].includes(dayKeyOf(today));
   return {
     shift: shift.length ? range(shift[0].start, shift.at(-1)!.end) : weekend ? "Weekend off" : "No shift today",
     now: now ? `${now.title} till ${clockLabel(now.end)}` : null,
+    next: next ? `${next.title} at ${clockLabel(next.start)}` : null,
     shiftStart: shift.length ? shift[0].start : null,
     shiftEnd: shift.length ? shift.at(-1)!.end : null,
   };
@@ -77,7 +79,7 @@ function range(start: number, end: number): string {
   return a.slice(-2) === b.slice(-2) ? `${a.slice(0, -3)}–${b}` : `${a}–${b}`;
 }
 
-/** Weight from the check-in and the weekly body check (the check-in wins on the same day); steps; sleep hours. */
+/** Weight from the check-in and the weekly body check (the check-in wins on the same day); sleep hours. */
 export function buildSeries(trackers: Tracker[], valueOn: ValueOn, bodyChecks: BodyCheck[], today: string) {
   const days = Array.from({ length: CHART_DAYS }, (_, i) => addDays(today, i - CHART_DAYS + 1));
   const bySlug = (slug: string) => trackers.find((t) => t.slug === slug);
@@ -89,11 +91,9 @@ export function buildSeries(trackers: Tracker[], valueOn: ValueOn, bodyChecks: B
 
   const weightTracker = bySlug("weight");
   const checks = new Map(bodyChecks.filter((c) => c.weight != null).map((c) => [c.date, c.weight as number]));
-  const steps = bySlug("steps");
   const [sleep, lightsOut, wake] = [bySlug("sleep"), bySlug("lights-out"), bySlug("wake")];
   return {
     weight: series((d) => (weightTracker && valueOn(weightTracker, d)) || checks.get(d)),
-    steps: series((d) => (steps ? valueOn(steps, d) : undefined)),
     sleep: series((d) => {
       const out = lightsOut && valueOn(lightsOut, d);
       const up = wake && valueOn(wake, d);
@@ -114,27 +114,34 @@ export function buildMeals(trackers: Tracker[], valueOn: ValueOn, today: string)
     });
 }
 
-/** Today's water against its daily target (3 L, in 0.5 L cups unless the tracker says otherwise). */
-export function buildWater(trackers: Tracker[], valueOn: ValueOn, today: string): DashboardData["water"] {
-  const water = trackers.find((t) => t.slug === "water");
-  if (!water) return null;
-  return {
-    trackerId: water.id,
-    litres: valueOn(water, today) ?? null,
-    target: water.target_period === "daily" && water.target != null ? Number(water.target) : 3,
-    step: water.step ? Number(water.step) : 0.5,
+/**
+ * The Today tile's five checks, from the closest existing trackers (docs/DESIGN.md v10):
+ * Check-in = anything saved today; Workout = the Workout tracker ticked or the steps target hit;
+ * Meals = all meal slots logged; Revision = Study minutes at their daily target (any minutes
+ * when there is no target); Reading = a reading page saved.
+ */
+export function buildTodayCheck(trackers: Tracker[], valueOn: ValueOn, today: string, checkedIn: boolean): DashboardData["todayCheck"] {
+  const bySlug = (slug: string) => trackers.find((t) => t.slug === slug);
+  const value = (slug: string) => {
+    const t = bySlug(slug);
+    return t ? valueOn(t, today) : undefined;
   };
-}
-
-/** Check-in fields filled today (meal slots are scored on their own; a yes/no counts when ticked). */
-export function buildCheckInFields(trackers: Tracker[], valueOn: ValueOn, today: string): DashboardData["checkInFields"] {
-  const fields = trackers.filter((t) => t.type !== "choice");
-  const filled = (t: Tracker) => {
-    const v = valueOn(t, today);
-    return v !== undefined && (t.type !== "checkbox" || v >= 1);
+  const target = (slug: string) => {
+    const t = bySlug(slug);
+    return t?.target_period === "daily" && t.target != null ? Number(t.target) : null;
   };
-  const water = fields.find((t) => t.slug === "water");
-  return { filled: fields.filter(filled).length, total: fields.length, water: water ? filled(water) : false };
+  const atTarget = (slug: string) => {
+    const v = value(slug);
+    return v !== undefined && v >= (target(slug) ?? 1);
+  };
+  const meals = trackers.filter((t) => t.type === "choice" && t.group_name === "Meals");
+  return [
+    { label: "Check-in", done: checkedIn },
+    { label: "Workout", done: atTarget("workout") || (value("steps") !== undefined && target("steps") != null && atTarget("steps")) },
+    { label: "Meals", done: meals.length > 0 && meals.every((t) => valueOn(t, today) !== undefined) },
+    { label: "Revision", done: atTarget("study") },
+    { label: "Reading", done: value("reading-page") !== undefined },
+  ];
 }
 
 /** Today's blood pressure, "118/76" per reading (morning, evening). */
@@ -147,29 +154,6 @@ export function buildBp(trackers: Tracker[], valueOn: ValueOn, today: string): D
     { label: "Morning", sys: get("bp-am-sys"), dia: get("bp-am-dia") },
     { label: "Evening", sys: get("bp-pm-sys"), dia: get("bp-pm-dia") },
   ].map(({ label, sys, dia }) => ({ label, value: sys != null && dia != null ? `${sys}/${dia}` : null }));
-}
-
-/** Study minutes today and this week (Monday on), against the daily target, plus the reading page. */
-export function buildStudy(trackers: Tracker[], valueOn: ValueOn, today: string): DashboardData["study"] {
-  const study = trackers.find((t) => t.slug === "study");
-  if (!study) return null;
-  const reading = trackers.find((t) => t.slug === "reading-page");
-  let weekMin = 0;
-  for (let d = weekStart(today); d <= today; d = addDays(d, 1)) weekMin += valueOn(study, d) ?? 0;
-  return {
-    todayMin: valueOn(study, today) ?? null,
-    weekMin,
-    dailyTarget: study.target_period === "daily" && study.target != null ? Number(study.target) : null,
-    page: reading ? (lastValue(reading, valueOn, today) ?? null) : null,
-  };
-}
-
-function lastValue(t: Tracker, valueOn: ValueOn, today: string): number | undefined {
-  for (let i = 0; i < 14; i++) {
-    const v = valueOn(t, addDays(today, -i));
-    if (v !== undefined) return v;
-  }
-  return undefined;
 }
 
 /**

@@ -1,6 +1,6 @@
 /*
   Task and goal shapes, shared by the real dashboard and /demo.
-  Matches supabase/migrations/…_tasks_goals.sql, …_tasks_api.sql and …_my_day_gate_jobs.sql.
+  Matches supabase/migrations/…_tasks_goals.sql, …_tasks_api.sql, …_my_day_gate_jobs.sql and …_tasks_goal_id.sql.
 */
 
 export type TaskStatus = "todo" | "doing" | "waiting" | "done";
@@ -20,15 +20,11 @@ export interface Task {
   order: number;
   /** ISO time the task moved to Done, or null. */
   doneAt: string | null;
-  /** For the action gate (src/lib/gate.ts), set by Claude through the API. */
-  nextSteps: string | null;
-  questions: string[];
-  chatName: string | null;
-  /** Answered on the gate: not asked again before this ISO time. */
-  quietUntil: string | null;
+  /** The goal this task belongs to (v10), or null = a loose task. Always null until the goal_id migration has run. */
+  goalId: string | null;
 }
 
-/** What the Board's add and edit sheet saves. */
+/** What the task sheet saves. */
 export interface NewTask {
   title: string;
   area: string;
@@ -36,9 +32,10 @@ export interface NewTask {
   status: TaskStatus;
   note: string;
   owner: Owner;
+  goalId: string | null;
 }
 
-/** The Board columns, in order. */
+/** The task statuses, in order (the sheet's "Status" choice). */
 export const TASK_COLUMNS: { status: TaskStatus; name: string }[] = [
   { status: "todo", name: "To do" },
   { status: "doing", name: "In progress" },
@@ -64,11 +61,15 @@ export function taskProblem(t: NewTask): string | null {
   return null;
 }
 
-/** Board order: most important first, then soonest due. Done: latest done first. */
-export function boardOrder(a: Task, b: Task): number {
-  if (a.status === "done" && b.status === "done") return (b.doneAt ?? "").localeCompare(a.doneAt ?? "");
-  if (a.order !== b.order) return b.order - a.order;
-  return (a.due ?? "9999").localeCompare(b.due ?? "9999");
+/** Work order: overdue first, then soonest due, then most important. */
+export function workOrder(today: string) {
+  const late = (t: Task) => Number(!(t.due != null && t.due < today));
+  return (a: Task, b: Task) => late(a) - late(b) || (a.due ?? "9999").localeCompare(b.due ?? "9999") || b.order - a.order;
+}
+
+/** Postgres/PostgREST say this when tasks.goal_id isn't there yet (the v10 migration hasn't run). */
+export function missingGoalColumn(error: { code?: string; message?: string } | null | undefined): boolean {
+  return !!error && (error.code === "42703" || error.code === "PGRST204" || /goal_id/.test(error.message ?? ""));
 }
 
 export function dueState(task: Task, today: string): "soon" | "overdue" | undefined {

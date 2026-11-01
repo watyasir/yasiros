@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/Button";
 import { TextButton } from "@/components/TextButton";
-import { sendMagicLink, signInWithCode, type CodeState, type LoginState } from "./actions";
+import { sendMagicLink, signInWithCode, verifyEmailCode, type CodeState, type EmailCodeState, type LoginState } from "./actions";
 
 export function LoginForm({ notice }: { notice?: string }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(sendMagicLink, { status: "idle" });
@@ -12,14 +12,7 @@ export function LoginForm({ notice }: { notice?: string }) {
   if (withCode) return <CodeForm onBack={() => setWithCode(false)} />;
 
   if (state.status === "sent") {
-    return (
-      <div role="status" className="flex flex-col gap-2">
-        <h2 className="m-0 text-[17px] font-semibold">Check your email</h2>
-        <p className="m-0 text-[15px] text-soft">
-          If {state.email} can sign in, a link is on its way. Open it to finish signing in.
-        </p>
-      </div>
-    );
+    return <EmailCodeForm email={state.email} />;
   }
 
   return (
@@ -45,7 +38,7 @@ export function LoginForm({ notice }: { notice?: string }) {
         {pending ? "Sending…" : "Email me a sign-in link"}
       </Button>
       <TextButton onClick={() => setWithCode(true)} className="self-center">
-        Have a code?
+        Have a code from Settings?
       </TextButton>
     </form>
   );
@@ -84,6 +77,43 @@ function CodeForm({ onBack }: { onBack: () => void }) {
       <TextButton onClick={onBack} className="self-center">
         Use email instead
       </TextButton>
+    </form>
+  );
+}
+
+/** After the email is sent: type the 6-digit code from it (the only way in inside the home-screen app), or open the link. */
+function EmailCodeForm({ email }: { email: string }) {
+  const [state, action, pending] = useActionState<EmailCodeState, FormData>(verifyEmailCode, { status: "idle" });
+  return (
+    <form action={action} className="flex flex-col gap-3">
+      <h2 className="m-0 text-[17px] font-semibold">Check your email</h2>
+      <p className="m-0 text-[15px] text-soft">
+        If {email} can sign in, an email is on its way. Type the 6-digit code from it here, or open its link.
+      </p>
+      <input type="hidden" name="email" value={email} />
+      <label htmlFor="token" className="text-[13px] font-semibold">
+        6-digit code
+      </label>
+      <input
+        id="token"
+        name="token"
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="[0-9]*"
+        required
+        maxLength={10}
+        placeholder="123456"
+        className="min-h-11 rounded-full border border-line bg-card px-4 font-mono text-[20px] tracking-[0.12em] text-ink"
+      />
+      {state.status === "error" && (
+        <p role="alert" className="m-0 text-[13px] text-danger">
+          {state.message}
+        </p>
+      )}
+      <Button type="submit" variant="primary" disabled={pending} className="sm:min-h-11">
+        {pending ? "Signing in…" : "Sign in with code"}
+      </Button>
     </form>
   );
 }

@@ -66,3 +66,24 @@ export async function signInWithCode(_prev: CodeState, form: FormData): Promise<
   }
   redirect("/");
 }
+
+export type EmailCodeState = { status: "idle" } | { status: "error"; message: string };
+
+/**
+ * Types-the-code sign-in (works inside the iPhone home-screen app, which can't open the email
+ * link): the 6-digit code in the sign-in email, checked with Supabase's email OTP. Needs {{ .Token }}
+ * in the Supabase "Magic link" email template. Only ALLOWED_EMAIL can finish.
+ */
+export async function verifyEmailCode(_prev: EmailCodeState, form: FormData): Promise<EmailCodeState> {
+  const email = String(form.get("email") ?? "").trim();
+  const token = String(form.get("token") ?? "").replace(/\D/g, "");
+  const wrong: EmailCodeState = { status: "error", message: "That code is wrong or expired. Check the email again, or go back and send a new one." };
+  if (!isAllowedEmail(email) || token.length < 6 || token.length > 10) return wrong;
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+  if (error || !isAllowedEmail(data.user?.email)) {
+    if (!error) await supabase.auth.signOut({ scope: "local" });
+    return wrong;
+  }
+  redirect("/");
+}

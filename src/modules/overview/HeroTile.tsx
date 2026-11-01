@@ -3,7 +3,6 @@
 import { useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Tile } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
-import { viewHref } from "@/components/dashboard/Nav";
 import { addDays, shortDate } from "@/lib/trackers";
 import type { HeroDay } from "@/modules/types";
 
@@ -21,28 +20,36 @@ const WORDS: Record<HeroDay, string> = { full: "full check-in", partial: "partia
 /** "Fri 6 Nov" */
 const dayLabel = (iso: string) => `${new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`))} ${shortDate(iso)}`;
 
+/** The 90 days and the streak with today's save counted straight away (the Overview strip and the hero use both). */
+export function useLiveArc() {
+  const { data, checkedIn } = useDashboard();
+  const hero = data.hero;
+  if (!hero) return null;
+  return {
+    hero,
+    days: hero.days.map((d) => (d === "today" && checkedIn ? ("partial" as const) : d)),
+    streak: hero.streak + (checkedIn && hero.days[hero.todayIndex] === "today" ? 1 : 0),
+  };
+}
+
 /**
  * Winter Arc at a glance (dark hero): Day N / 90, the streak with a small flame, and 90 round
  * dots (30 a row, 15 on phones): full check-in filled, partial half-filled, today with a pulsing
  * ring. Hover, drag or arrow keys across the dots: the line under them reads that day.
- * On the Winter Arc page itself (`onPage`) the heading isn't a link.
+ * It sits at the top of Health.
  */
-export function HeroTile({ onPage = false }: { onPage?: boolean }) {
-  const { data, checkedIn } = useDashboard();
-  const hero = data.hero;
-  const href = onPage ? undefined : viewHref(data.basePath, "arc");
+export function HeroTile() {
+  const live = useLiveArc();
   const [picked, setPicked] = useState<number | null>(null);
-  if (!hero) {
+  if (!live) {
     return (
-      <Tile title="Winter Arc" href={href} tone="hero" area={onPage ? undefined : "hero"} tilt={!onPage}>
+      <Tile title="Winter Arc" tone="hero">
         <p className="m-0 text-sm text-hero-soft">Set the start date in Settings to begin the 90 days.</p>
       </Tile>
     );
   }
+  const { hero, days, streak } = live;
   const started = hero.day >= 1;
-  // A save from the Overview turns today's empty dot into a partial one straight away.
-  const days = hero.days.map((d) => (d === "today" && checkedIn ? "partial" : d));
-  const streak = hero.streak + (checkedIn && hero.days[hero.todayIndex] === "today" ? 1 : 0);
   const shown = picked ?? (hero.todayIndex >= 0 ? hero.todayIndex : started ? hero.length - 1 : 0);
   const readout = `Day ${shown + 1} · ${dayLabel(addDays(hero.start, shown))} · ${WORDS[days[shown]]}`;
 
@@ -61,10 +68,7 @@ export function HeroTile({ onPage = false }: { onPage?: boolean }) {
   return (
     <Tile
       title="Winter Arc"
-      href={href}
       tone="hero"
-      area={onPage ? undefined : "hero"}
-      tilt={!onPage}
       className="min-h-[300px] min-[561px]:min-h-0"
       aside={
         streak > 0 && (

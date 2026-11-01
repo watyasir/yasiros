@@ -1,9 +1,8 @@
-import type { Owner, TaskStatus } from "@/lib/tasks";
-import type { DashboardData, SeasonDay, Task } from "@/modules/types";
+import type { DashboardData, SeasonDay } from "@/modules/types";
 import { demoBento } from "./bento";
 import { DEMO_TODAY, demoBody } from "./body";
-import { demoClaudeJobs } from "./claude-jobs";
 import { demoGallery } from "./gallery";
+import { demoOpenTasks, demoTasks } from "./tasks";
 
 /*
   Fake data for /demo. Every name, amount and number here is made up.
@@ -18,37 +17,20 @@ const seasonDays: SeasonDay[] = Array.from({ length: 90 }, (_, i) => {
   return ((i * 47 + 13) % 100) / 100 < 0.3 ? "most" : "all";
 });
 
-function demoTask(
-  id: string,
-  title: string,
-  owner: Owner,
-  area: string,
-  due: string | null,
-  status: TaskStatus,
-  extra: Partial<Pick<Task, "note" | "order" | "doneAt" | "nextSteps" | "questions" | "chatName">> = {},
-): Task {
-  return { id, title, owner, area, due, status, note: null, order: 0, doneAt: null, nextSteps: null, questions: [], chatName: null, quietUntil: null, ...extra };
-}
-
 export const demoData: DashboardData = {
   theme: "candy",
-  ownerLine: "Life, tracked",
   basePath: "/demo",
   todayISO: DEMO_TODAY,
   logHref: "/demo/log",
   shareHref: "/demo/progress",
   views: {
-    overview: {
-      title: "Sunday, 18 October",
-      subtitle: "Sample data · 3 tasks due today · 2 overdue",
-    },
-    arc: { title: "Winter Arc", subtitle: "26 Sep 2026 → 24 Dec 2026 · 90 days" },
-    board: { title: "Board", subtitle: "11 open · 2 overdue · 2 waiting on others" },
+    overview: { title: "Sunday, 18 October", subtitle: "" },
     gallery: { title: "Gallery", subtitle: "Images and files Claude saved from chats" },
-    money: { title: "Money", subtitle: "October · sample accounts" },
-    health: { title: "Health", subtitle: "Weight, steps, sleep, blood pressure and workouts" },
+    finance: { title: "Finance", subtitle: "October · sample accounts" },
+    health: { title: "Health", subtitle: "Winter Arc, weight, sleep, workouts, meals and blood pressure" },
+    work: { title: "Work", subtitle: `${demoOpenTasks} open · 3 overdue` },
   },
-  navBadges: { board: "11" },
+  navBadges: { work: String(demoOpenTasks) },
   season: {
     startsIn: 0,
     name: "Winter Arc",
@@ -86,14 +68,6 @@ export const demoData: DashboardData = {
     weeks: [78, 86, 71, 64, null, null, null, null, null, null, null, null, null],
   },
 
-  today: [
-    { label: "Gym · push day", area: "Body", done: true },
-    { label: "High-protein breakfast", area: "Health", done: true },
-    { label: "Study 90 min", area: "Mind", done: true },
-    { label: "Skincare AM", area: "Looks", done: true },
-    { label: "German · 20 min", area: "Skills", done: false },
-    { label: "Hair routine PM", area: "Looks", done: false },
-  ],
   money: {
     month: "October",
     updated: "9:52 PM",
@@ -162,34 +136,14 @@ export const demoData: DashboardData = {
   ...demoBody,
   ...demoBento,
   goals: [
-    { name: "1RK fund", progress: "₹42,000 of ₹1,00,000", pct: 42, by: "by 31 Jan 2027", tone: "accent" },
-    { name: "Gain 5 kg", progress: "2.1 of 5 kg", pct: 42, by: "by 24 Dec", tone: "accent" },
-    { name: "Bench press 70 kg", progress: "55 of 70", pct: 79, by: "by 31 Dec", tone: "ok" },
-    { name: "German A1", progress: "35%", pct: 35, by: "by 31 Mar 2027", tone: "accent" },
-    { name: "Travel fund", progress: "52%", pct: 52, by: "by 30 Apr 2027", tone: "accent" },
+    { id: "g1rk", name: "1RK fund", area: "Money", progress: "₹42,000 of ₹1,00,000", pct: 42, by: "by 31 Jan 2027", tone: "accent" },
+    { id: "ggain", name: "Gain 5 kg", area: "Body", progress: "2.1 of 5 kg", pct: 42, by: "by 24 Dec", tone: "accent" },
+    { id: "gbench", name: "Bench press 70 kg", area: "Body", progress: "55 of 70", pct: 79, by: "by 31 Dec", tone: "ok" },
+    { id: "ggerman", name: "German A1", area: "Skills", progress: "35%", pct: 35, by: "by 31 Mar 2027", tone: "accent" },
+    { id: "gtravel", name: "Travel fund", area: "Money", progress: "52%", pct: 52, by: "by 30 Apr 2027", tone: "accent" },
+    { id: "gcert", name: "Course certificate", area: "Learning", progress: "100%", pct: 100, by: "Reached", tone: "ok" },
   ],
-  tasks: [
-    demoTask("t0", "Move to the new flat", "Both", "Home", "2026-10-20", "todo", { order: 10, note: "Book the movers, then pack the kitchen" }),
-    demoTask("t1", "Winter Arc kickoff", "Both", "Winter Arc", "2026-10-18", "todo"),
-    demoTask("t2", "Renew library card", "Me", "Errands", "2026-10-18", "todo"),
-    demoTask("t3", "Book dentist check-up", "Me", "Health", "2026-10-16", "todo", { note: 'Next: call the clinic at 10 AM, ask for a Saturday slot | Chat: "Health admin"' }),
-    demoTask("t4", "November finance review", "Both", "Money", "2026-10-20", "todo", { note: "Claude drafts the numbers first" }),
-    demoTask("t5", "Cancel unused music app", "Claude", "Subscriptions", null, "todo"),
-    demoTask("t6", "Yasir OS design", "Both", "Build", null, "doing", { order: 2 }),
-    demoTask("t7", "Course completion certificate", "Both", "Learning", "2026-10-18", "doing"),
-    demoTask("t8", "Two delivery refund disputes", "Claude", "Disputes", "2026-10-15", "doing", {
-      note: "Waiting 48 h before the second follow-up",
-      nextSteps: "Claude sends the second follow-up; you forward the delivery photos first.",
-      questions: ["Do you still have the photos from the 12 Oct delivery?", "OK to escalate to the consumer helpline if there's no reply by Friday?"],
-      chatName: "Refund disputes",
-    }),
-    demoTask("t9", "Habit app review", "Claude", "Build", null, "doing"),
-    demoTask("t10", "New job: document check", "Claude", "Work", null, "waiting", { note: "HR said by Friday" }),
-    demoTask("t11", "Course mentor: batch reply", "Claude", "Learning", "2026-10-21", "waiting"),
-    demoTask("t12", "Dashboard project brief", "Claude", "Build", null, "done", { doneAt: "2026-10-17T10:00:00+05:30" }),
-    demoTask("t13", "Weekly review agent", "Claude", "Build", null, "done", { doneAt: "2026-10-16T10:00:00+05:30" }),
-    demoTask("t14", "Finance logging + email bridge", "Claude", "Build", null, "done", { doneAt: "2026-10-15T10:00:00+05:30" }),
-  ],
+  tasks: demoTasks,
+  goalLinks: true,
   gallery: demoGallery,
-  claudeJobs: demoClaudeJobs,
 };

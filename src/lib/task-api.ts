@@ -9,6 +9,8 @@ import { TASK_STATUSES, type Owner, type TaskStatus } from "./tasks";
 /** The columns sent back by GET /api/tasks and written by POST. */
 export const TASK_API_COLUMNS =
   "external_id, title, status, owner, area, due_date, note, sort_order, next_steps, questions, chat_name, updated_at, updated_by, done_at";
+/** Plus goal_id, once the goal_id migration has run (the API falls back to the plain list before that). */
+export const TASK_API_COLUMNS_GOAL = `${TASK_API_COLUMNS}, goal_id`;
 
 const MAX_TASKS = 100;
 
@@ -29,12 +31,14 @@ interface TaskUpsert {
   next_steps?: string | null;
   questions?: string[];
   chat_name?: string | null;
+  goal_id?: string | null;
   updated_by: "Yasir" | "Claude";
 }
 
 type Parsed = { ok: true; tasks: TaskUpsert[] } | { ok: false; error: string };
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+const isUuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
 
 /** Reads ?status=todo,doing. Undefined = no filter; a string = the error to send. */
@@ -60,7 +64,7 @@ export function parseTaskUpserts(body: unknown): Parsed {
     // Errors name the field, and its list position when a list was sent.
     const at = single ? "" : `tasks[${i}].`;
     if (!isObject(raw)) return fail(`${single ? "task" : `tasks[${i}]`}: send an object.`);
-    const { external_id, title, status, owner, area, due_date, note, sort_order, next_steps, questions, chat_name, updated_by } = raw;
+    const { external_id, title, status, owner, area, due_date, note, sort_order, next_steps, questions, chat_name, goal_id, updated_by } = raw;
 
     if (typeof external_id !== "string" || !external_id.trim() || external_id.trim().length > 100) {
       return fail(`${at}external_id: text, 1 to 100 characters.`);
@@ -113,6 +117,10 @@ export function parseTaskUpserts(body: unknown): Parsed {
     if (chat_name !== undefined) {
       if (chat_name !== null && (typeof chat_name !== "string" || chat_name.trim().length > 100)) return fail(`${at}chat_name: text, up to 100 characters, or null.`);
       task.chat_name = chat_name?.trim() || null;
+    }
+    if (goal_id !== undefined) {
+      if (goal_id !== null && !isUuid(goal_id)) return fail(`${at}goal_id: a goal's id (uuid), or null for a loose task.`);
+      task.goal_id = goal_id;
     }
     if (updated_by !== undefined) {
       if (updated_by !== "Yasir" && updated_by !== "Claude") return fail(`${at}updated_by: Yasir or Claude (default Claude).`);

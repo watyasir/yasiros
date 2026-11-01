@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { Chip } from "@/components/Chip";
 import { EmptyNote } from "@/components/EmptyNote";
 import { changeWords, LineChart } from "@/components/LineChart";
 import { Segmented } from "@/components/Segmented";
@@ -8,38 +10,51 @@ import { BigNumber, Tile, type TileTone } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { addDays } from "@/lib/trackers";
 import type { Point } from "@/modules/types";
-import { TodayRows } from "@/modules/today/TodayRows";
-import { BodyTile } from "./BodyTile";
+import { HeroTile } from "@/modules/overview/HeroTile";
+import { MealsTile } from "./MealsTile";
 import { WorkoutsTile } from "./WorkoutsTile";
 
-const RANGES = [14, 30, 90] as const;
+const RANGES = [7, 30, 90] as const;
 
-/** Health: weight, steps and sleep over 14 / 30 / 90 days, blood pressure, today's trackers, workouts, the body check. */
+/**
+ * Health: the Winter Arc hero, then weight, sleep and workouts in a row, then meals (two columns)
+ * and blood pressure. The 7D / 30D / 90D control sets the weight and sleep charts.
+ */
 export function HealthView() {
   const { data } = useDashboard();
-  const [days, setDays] = useState<(typeof RANGES)[number]>(14);
+  const [days, setDays] = useState<(typeof RANGES)[number]>(30);
   const within = (points: Point[]) => points.filter((p) => p.date > addDays(data.todayISO, -days));
+  const { bodyCheck, bodyHref } = data;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="w-full max-w-xs">
-        <Segmented label="Chart range" options={RANGES.map((d) => ({ value: d, label: `${d} days` }))} value={days} onChange={setDays} />
+    <div className="grid gap-4 min-[861px]:grid-cols-3">
+      <div className="min-w-0 min-[861px]:col-span-3">
+        <HeroTile />
       </div>
-      <div className="grid gap-4 min-[861px]:grid-cols-3">
-        <TrendTile title="Weight" tone="weight" points={within(data.weight.points)} unit="kg" days={days} empty="Log your weight on 2 days to see the trend." />
-        <TrendTile title="Steps" tone="today" points={within(data.steps)} unit="steps" digits={0} days={days} empty="Log steps on 2 days to see the trend." />
-        <TrendTile title="Sleep" tone="study" points={within(data.sleep)} unit="hr" days={days} empty="Log lights out and wake time (or sleep hours) on 2 days." />
+      <div className="w-full max-w-xs min-[861px]:col-span-3">
+        <Segmented label="Chart range" options={RANGES.map((d) => ({ value: d, label: `${d}D`, ariaLabel: `${d} days` }))} value={days} onChange={setDays} />
       </div>
-      <div className="grid items-start gap-4 min-[861px]:grid-cols-2">
-        <BpTile />
-        <Tile title="Today's trackers" href={data.logHref}>
-          <div className="flex flex-col">
-            <TodayRows />
-          </div>
-        </Tile>
-        <WorkoutsTile />
-        <BodyTile />
+      <TrendTile
+        title="Weight"
+        tone="weight"
+        points={within(data.weight.points)}
+        unit="kg"
+        days={days}
+        empty="Log your weight on 2 days to see the trend."
+        aside={
+          bodyCheck.due && (
+            <Link href={bodyHref} className="-my-2 inline-flex min-h-11 items-center no-underline">
+              <Chip tone="warn">Body check due</Chip>
+            </Link>
+          )
+        }
+      />
+      <TrendTile title="Sleep" tone="study" points={within(data.sleep)} unit="hr" days={days} empty="Log lights out and wake time (or sleep hours) on 2 days." />
+      <WorkoutsTile />
+      <div className="min-w-0 min-[861px]:col-span-2">
+        <MealsTile />
       </div>
+      <BpTile />
     </div>
   );
 }
@@ -51,7 +66,7 @@ function TrendTile({
   unit,
   days,
   empty,
-  digits = 1,
+  aside,
 }: {
   title: string;
   tone: TileTone;
@@ -59,21 +74,24 @@ function TrendTile({
   unit: string;
   days: number;
   empty: string;
-  digits?: number;
+  aside?: React.ReactNode;
 }) {
   if (points.length < 2) {
     return (
-      <Tile title={title} tone={tone}>
+      <Tile title={title} tone={tone} aside={aside}>
         <EmptyNote>{empty}</EmptyNote>
       </Tile>
     );
   }
   const latest = points.at(-1)!.value;
-  const change = changeWords(points, unit, digits);
+  const change = changeWords(points, unit, 1);
   return (
-    <Tile title={title} tone={tone} aside={<span className="text-xs text-soft">{change}</span>}>
-      <BigNumber value={latest.toLocaleString("en-IN", { maximumFractionDigits: digits })} unit={unit} size="md" />
-      <LineChart points={points} unit={unit} digits={digits} height={110} summary={`${title} ${change} over ${days} days, latest ${latest} ${unit}`} />
+    <Tile title={title} tone={tone} aside={aside}>
+      <div className="flex flex-col gap-1">
+        <BigNumber value={latest.toLocaleString("en-IN", { maximumFractionDigits: 1 })} unit={unit} size="md" />
+        <span className="text-xs font-semibold text-soft">{change}</span>
+      </div>
+      <LineChart points={points} unit={unit} digits={1} height={110} summary={`${title} ${change} over ${days} days, latest ${latest} ${unit}`} />
     </Tile>
   );
 }

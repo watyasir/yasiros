@@ -5,7 +5,7 @@ import type { DashboardData } from "@/modules/types";
 
 const GOAL_TONES: Tone[] = ["accent", "pop"];
 
-/** How far each goal is, as the Goals tile shows it. `tracked` = linked tracker totals by goal id. */
+/** How far each goal is, as the Work cards and Finance's Saving for tile show it. `tracked` = linked tracker totals by goal id. */
 export function buildGoals(goals: Goal[], tracked: Map<string, number>, trackers: Tracker[], today: string): DashboardData["goals"] {
   return goals.map((g, i) => {
     const { now, unit } = goalNow(g, tracked, trackers);
@@ -15,7 +15,9 @@ export function buildGoals(goals: Goal[], tracked: Map<string, number>, trackers
     if (pct >= 100) by = "Reached";
     else if (g.deadline && g.deadline < today) by = `Deadline passed · ${shortDate(g.deadline)}`;
     return {
+      id: g.id,
       name: g.title,
+      area: g.area,
       progress: `${formatAmount(round1(now))} of ${formatAmount(g.target)}${u}`,
       pct,
       by,

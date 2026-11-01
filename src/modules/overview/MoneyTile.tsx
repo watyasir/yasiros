@@ -13,17 +13,16 @@ const CARD = ["bg-card", "bg-card/75", "bg-card/50"];
 
 /**
  * The wallet: up to 3 bank cards stacked back to front ("All banks" while the snapshot has no
- * banks). Hover, focus or tap fans them apart. The total counts up once, then "Updated 8:45 PM".
+ * banks). Hover, focus or tap fans them apart. What's left to spend counts up once, then "Updated 8:45 PM".
  */
 export function MoneyTile() {
   const { data } = useDashboard();
   const money = data.money;
-  const href = viewHref(data.basePath, "money");
+  const href = viewHref(data.basePath, "finance");
   const [fanned, setFanned] = useState(false);
   const banks = money ? money.accounts.filter((a) => a.kind !== "card").slice(0, 3) : [];
   const cards = banks.length ? banks.map((b) => ({ name: b.name, amount: b.balance })) : money ? [{ name: "All banks", amount: money.spendable }] : [];
-  const total = banks.length ? banks.reduce((n, b) => n + b.balance, 0) : (money?.spendable ?? 0);
-  const counted = useCountUp(total);
+  const counted = useCountUp(money?.spendable ?? 0);
 
   if (!money) {
     return (
@@ -63,7 +62,7 @@ export function MoneyTile() {
       </button>
       <div className="flex flex-col gap-0.5">
         <span className="display text-[32px] leading-none">{formatRupees(Math.round(counted))}</span>
-        <span className="text-xs text-soft">Updated {money.updated}</span>
+        <span className="text-xs text-soft">Left to spend · updated {money.updated}</span>
       </div>
     </Tile>
   );

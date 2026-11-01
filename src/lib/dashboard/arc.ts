@@ -8,7 +8,7 @@ import { daysBetween, shortDate } from "./dates";
 export type HitOn = (t: Tracker, date: string, target?: number) => boolean;
 
 /** "2026-10-26" -> "26 Oct 2026" */
-export function fullDate(iso: string): string {
+function fullDate(iso: string): string {
   return `${shortDate(iso)} ${iso.slice(0, 4)}`;
 }
 

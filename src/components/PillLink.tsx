@@ -5,7 +5,7 @@ import type { ComponentPropsWithoutRef } from "react";
 export function PillLink({ className = "", ...props }: ComponentPropsWithoutRef<typeof Link>) {
   return (
     <Link
-      className={`inline-flex min-h-11 items-center rounded-full border border-solid border-line bg-card px-4 text-[13px] font-semibold text-ink no-underline hover:bg-fill-strong hover:text-ink sm:min-h-9 ${className}`}
+      className={`press inline-flex min-h-11 items-center rounded-full border border-solid border-line bg-card px-4 text-[13px] font-semibold text-ink no-underline hover:bg-fill-strong hover:text-ink sm:min-h-9 ${className}`}
       {...props}
     />
   );

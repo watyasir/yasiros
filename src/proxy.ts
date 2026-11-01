@@ -9,7 +9,7 @@ import { supabaseKey, supabaseUrl } from "@/lib/supabase/config";
   and sends signed-out visitors to /login. The allowed-email check happens in requireUser().
 */
 /** Pages that need sign-in ("/" shows a welcome, "/progress" a share card, so they stay open). */
-const PRIVATE = ["/log", "/settings", "/winter-arc", "/board", "/money", "/health", "/gallery"];
+const PRIVATE = ["/log", "/settings", "/health", "/finance", "/work", "/gallery"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -58,5 +58,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // The pages, so the login cookie stays fresh on each ("/" and "/progress" stay open to visitors).
-  matcher: ["/", "/winter-arc", "/board", "/money", "/health", "/gallery", "/log/:path*", "/login", "/settings/:path*", "/progress"],
+  matcher: ["/", "/health", "/finance", "/work", "/gallery", "/log/:path*", "/login", "/settings/:path*", "/progress"],
 };

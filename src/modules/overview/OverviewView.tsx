@@ -1,26 +1,18 @@
 "use client";
 
-import { HeroTile } from "./HeroTile";
-import { CheckInTile, TodayTile } from "./DayTiles";
-import { ClaudeTile, FundTile, MealsTile, StudyTile } from "./LifeTiles";
+import { ArcStrip } from "./ArcStrip";
 import { MoneyTile } from "./MoneyTile";
 import { NextUpTile } from "./NextUpTile";
-import { WeightTile } from "./WeightTile";
+import { TodayTile } from "./TodayTile";
 
-/** Overview: the colour-blocked bento (globals.css `bento`), tiles in priority order. Each heading opens its full page. */
+/** Overview: four tiles in the bento (globals.css `bento`): Today, Next up, Money, then the Winter Arc strip. Each heading opens its page. */
 export function OverviewView() {
   return (
     <div className="bento">
-      <HeroTile />
-      <CheckInTile />
       <TodayTile />
       <NextUpTile />
       <MoneyTile />
-      <WeightTile />
-      <FundTile />
-      <MealsTile />
-      <StudyTile />
-      <ClaudeTile />
+      <ArcStrip />
     </div>
   );
 }

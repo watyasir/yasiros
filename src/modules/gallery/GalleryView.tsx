@@ -207,9 +207,8 @@ function Viewer({ item, onClose, onDelete }: { item: GalleryItem; onClose: () =>
 
       <div className={`relative flex-1 overflow-auto [touch-action:pan-x_pan-y_pinch-zoom] ${actual ? "" : "flex items-center justify-center p-3"}`}>
         {isPdf ? (
-          <a href={item.url} target="_blank" rel="noreferrer" className="m-auto text-[15px] font-semibold">
-            Open the PDF
-          </a>
+          // No link out: a PDF opened in the home-screen app has no way back. Download is below.
+          <p className="m-auto p-4 text-center text-[15px] text-soft">PDFs don&apos;t preview here. Use Download below.</p>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- the untouched original, full size
           <img src={item.url} alt={item.description ?? item.title} className={actual ? "max-w-none" : "max-h-full max-w-full object-contain"} />

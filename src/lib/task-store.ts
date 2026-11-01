@@ -1,6 +1,6 @@
 import "server-only";
 import type { createClient } from "./supabase/server";
-import type { Goal, Owner, Task, TaskStatus } from "./tasks";
+import { missingGoalColumn, type Goal, type Owner, type Task, type TaskStatus } from "./tasks";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -14,19 +14,24 @@ type TaskRow = {
   note: string | null;
   sort_order: number;
   done_at: string | null;
-  next_steps: string | null;
-  questions: string[] | null;
-  chat_name: string | null;
-  gate_quiet_until: string | null;
+  goal_id?: string | null;
 };
 
-const TASK_COLUMNS = "id, title, area, due_date, status, owner, done_at, note, sort_order, next_steps, questions, chat_name, gate_quiet_until";
+const TASK_COLUMNS = "id, title, area, due_date, status, owner, done_at, note, sort_order";
 
-/** Every task (the Board shows the latest 20 done, with "Show all"). Null = database error. */
-export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
-  const { data, error } = await supabase.from("tasks").select(TASK_COLUMNS).order("created_at").returns<TaskRow[]>();
-  if (error || !data) return null;
-  return data.map((t) => ({
+/**
+ * Every task. Null = database error. `goalLinks` is false before the goal_id migration has run:
+ * the column is left out, every task is loose, and the app keeps working.
+ */
+export async function loadTasks(supabase: Supabase): Promise<{ tasks: Task[]; goalLinks: boolean } | null> {
+  let goalLinks = true;
+  let res = await supabase.from("tasks").select(`${TASK_COLUMNS}, goal_id`).order("created_at").returns<TaskRow[]>();
+  if (res.error && missingGoalColumn(res.error)) {
+    goalLinks = false;
+    res = await supabase.from("tasks").select(TASK_COLUMNS).order("created_at").returns<TaskRow[]>();
+  }
+  if (res.error || !res.data) return null;
+  const tasks = res.data.map((t) => ({
     id: t.id,
     title: t.title,
     area: t.area,
@@ -36,11 +41,9 @@ export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
     note: t.note,
     order: t.sort_order,
     doneAt: t.done_at,
-    nextSteps: t.next_steps,
-    questions: t.questions ?? [],
-    chatName: t.chat_name,
-    quietUntil: t.gate_quiet_until,
+    goalId: t.goal_id ?? null,
   }));
+  return { tasks, goalLinks };
 }
 
 /** Goals, nearest deadline first, with each linked tracker's total since the goal started. Null = database error. */

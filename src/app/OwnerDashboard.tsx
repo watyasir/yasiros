@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { currentOwner } from "@/lib/auth";
 import { loadDashboardData } from "@/lib/dashboard/load";
 import type { ViewId } from "@/modules/types";
-import { addTask, answerGate, deleteGalleryItem, deleteTask, listGallery, moveTask, setTodayEntry, toggleTodayTracker, updateTask } from "./actions";
+import { addTask, deleteGalleryItem, deleteTask, listGallery, moveTask, setTodayEntry, updateTask } from "./actions";
 
 /**
  * One page of the real app, signed in as the owner. Every page reads the same data, so moving
@@ -12,13 +13,7 @@ import { addTask, answerGate, deleteGalleryItem, deleteTask, listGallery, moveTa
  */
 export function OwnerDashboard({ view, signedOut }: { view: ViewId; signedOut?: React.ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        <p role="status" className="m-0 p-6 text-center text-sm text-soft">
-          Loading…
-        </p>
-      }
-    >
+    <Suspense fallback={<PageSkeleton view={view} />}>
       <Content view={view} signedOut={signedOut} />
     </Suspense>
   );
@@ -38,9 +33,8 @@ async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.Re
     <Dashboard
       data={data}
       view={view}
-      onToggleToday={toggleTodayTracker}
       onSetEntry={setTodayEntry}
-      taskActions={{ add: addTask, update: updateTask, move: moveTask, remove: deleteTask, gate: answerGate }}
+      taskActions={{ add: addTask, update: updateTask, move: moveTask, remove: deleteTask }}
       galleryActions={{ list: listGallery, remove: deleteGalleryItem }}
     />
   );

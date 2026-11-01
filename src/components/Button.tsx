@@ -14,7 +14,7 @@ export function Button({
   return (
     <button
       type="button"
-      className={`min-h-11 cursor-pointer rounded-full border-0 px-4 text-[13px] font-semibold sm:min-h-9 ${variants[variant]} ${className}`}
+      className={`press min-h-11 cursor-pointer rounded-full border-0 px-4 text-[13px] font-semibold sm:min-h-9 ${variants[variant]} ${className}`}
       {...props}
     />
   );
