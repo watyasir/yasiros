@@ -8,7 +8,7 @@ import { toShareCard } from "@/lib/share";
 import { isShareToken, loadPublicShareCard, shareToken } from "@/lib/share-store";
 
 export const metadata: Metadata = {
-  title: "Winter Arc progress · Yasir OS",
+  title: "Winter Arc progress",
   description: "Winter Arc progress: day, streaks, targets, workouts and weight change.",
   // The token is in the link: keep it out of search results and out of other sites' logs.
   robots: { index: false, follow: false },

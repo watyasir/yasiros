@@ -1,4 +1,4 @@
-# Yasir OS
+# Decko (repo: yasiros)
 
 A personal life dashboard with a 90-day **Winter Arc** season on top. One place to see and log health, workouts, body, tasks, goals and money, built to keep growing: new areas of life are added as data, not new code.
 

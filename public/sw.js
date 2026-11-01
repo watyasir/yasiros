@@ -1,12 +1,12 @@
 /*
-  Yasir OS service worker (M10). No library. Small on purpose:
+  Decko service worker (M10). No library. Small on purpose:
   - App shell and static files (/_next/static, /icons, the offline page): cache first.
     Their file names change when their content does, so a cached copy is never stale.
   - Pages, /api and sign-in are never cached. Offline, a page opens the offline card instead.
   It never reloads open pages: a new version takes over on the next visit.
   Bump VERSION to drop every old cache.
 */
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `static-${VERSION}`;
 const OFFLINE = "/offline";
 

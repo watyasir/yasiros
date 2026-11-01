@@ -10,7 +10,7 @@ import { addDays, todayISO } from "@/lib/trackers";
   webcal://). The day plan's phases repeat weekly on their days; tasks with a due date are
   all-day events. Read-only; the calendar app fetches it again about every hour.
   &cat=<key> gives one coloured feed per category (src/lib/calendar.ts); without it, everything
-  comes in the one "Yasir OS" feed as before.
+  comes in the one "Decko" feed as before.
 */
 
 export async function GET(request: Request) {
@@ -39,9 +39,9 @@ export async function GET(request: Request) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Yasir OS//Calendar//EN",
+    "PRODID:-//Decko//Calendar//EN",
     "CALSCALE:GREGORIAN",
-    `X-WR-CALNAME:${cat ? `Yasir OS · ${cat.name}` : "Yasir OS"}`,
+    `X-WR-CALNAME:${cat ? `Decko · ${cat.name}` : "Decko"}`,
     ...(cat ? [`X-APPLE-CALENDAR-COLOR:${cat.color}`] : []),
     "X-WR-TIMEZONE:Asia/Kolkata",
     "REFRESH-INTERVAL;VALUE=DURATION:PT1H",

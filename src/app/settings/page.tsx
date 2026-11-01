@@ -11,7 +11,7 @@ import { addDays, todayISO } from "@/lib/trackers";
 import { loadTheme } from "@/lib/theme-store";
 import { addTracker, makeSignInCode, resetTestData, saveSeason, saveTheme } from "./actions";
 
-export const metadata: Metadata = { title: "Settings · Yasir OS" };
+export const metadata: Metadata = { title: "Settings" };
 
 export default function SettingsPage() {
   return (

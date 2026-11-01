@@ -1,6 +1,6 @@
-# Yasir OS
+# Decko (repo: yasiros)
 
-**Yasir OS** (code and repo name `yasiros`): a personal life dashboard for Yasir. Winter Arc is only the 90-day season feature (chip, page, hero), never the product name. One place to see and log health, workouts, body, tasks, goals and money, with a 90-day "Winter Arc" season on top. It is built to keep growing: new areas of life get added as new trackers, without rebuilding the app.
+**Decko** (repo and code name `yasiros`; the display name since 2 Nov 2026, was "Yasir OS"): a personal life dashboard for Yasir. Only the name people see changed: the repo, the address `yasiros.vercel.app`, every route and every API URL stay as they are (Apple Calendar feeds and the finance task depend on them). Winter Arc is only the 90-day season feature (chip, page, hero), never the product name. One place to see and log health, workouts, body, tasks, goals and money, with a 90-day "Winter Arc" season on top. It is built to keep growing: new areas of life get added as new trackers, without rebuilding the app.
 
 It is also a **public portfolio project**. Yasir is a vibe coder: he directs, prompts and reviews; you write the code. Explain what you did in plain words, not jargon.
 
@@ -59,6 +59,7 @@ Workouts, tasks, goals and money get their own tables because their shape is dif
 Short version:
 - **Light only, three themes:** Candy (default), Matcha, Sunset. Each theme is a set of `--th-*` variables on `[data-theme]` in `src/app/globals.css`, mapped to Tailwind colours by `@theme inline` (`page`, `ink`, `soft`, `hero`, `accent`, `dot-on`, `t-tasks`, `t-money`, ...). Never a hex value in a component. The demo is always Candy.
 - **Contrast:** every text/background pair ≥ 4.5:1 in all three themes. Run `npm run contrast` after any colour change.
+- **App icon "Bento":** `public/icons/icon.svg` (4 tiles on `#2d2a70`) is the source; the PNGs, `src/app/favicon.ico`, `src/app/icon.svg` and the iPhone launch screens in `public/splash/` are rendered from it.
 - **Type:** `display` (Bricolage 800) for headings and big numbers, Inter for words, `label` (JetBrains Mono 700, uppercase 11px) for tile headings. All via `next/font`.
 - **Components:** one `Tile` (tones + tilt), one SVG `LineChart`, one `useConfetti`, one `Toast`. No chart or animation library. Files under ~250 lines.
 - **Behaviour:** tilt and glare on mouse devices only; confetti ≤ 120 pieces; one toast at a time with optional Undo; `prefers-reduced-motion` turns motion off; every control a labelled button or link with a 44px target and a visible focus ring; every write optimistic with rollback and an error toast.

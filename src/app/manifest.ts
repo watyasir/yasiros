@@ -4,8 +4,8 @@ import { DEFAULT_THEME, THEME_BG } from "@/lib/theme";
 /** Install as a home-screen app (M10). Colours match the page (Candy, the default theme). */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Yasir OS",
-    short_name: "Yasir OS",
+    name: "Decko",
+    short_name: "Decko",
     description: "A personal life dashboard with a 90-day Winter Arc season.",
     id: "/",
     start_url: "/",

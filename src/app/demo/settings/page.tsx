@@ -4,7 +4,7 @@ import { Group } from "@/components/FormGroup";
 import { ClaudeJobsSection, MoreSection } from "@/components/settings/ExtrasSections";
 import { demoClaudeJobs } from "@/data/demo/claude-jobs";
 
-export const metadata: Metadata = { title: "Demo · Settings · Yasir OS", description: "Yasir OS settings on made-up sample data." };
+export const metadata: Metadata = { title: "Demo · Settings", description: "Decko settings on made-up sample data." };
 
 /** /demo's Settings: the Gallery and share card links and Claude's jobs, as in the real app. Nothing to save here. */
 export default function DemoSettingsPage() {

@@ -154,7 +154,7 @@ export const demoData: DashboardData = {
   goals: [
     { id: G.move, name: "Move to a 1RK", area: "Home", deadline: "2027-01-31", progress: "2 of 4 steps", pct: 50, by: "by 31 Jan 2027", tone: "accent", saving: false },
     { id: G.exams, name: "Clear 3rd-year exams", area: "Study", deadline: "2026-11-21", progress: "40%", pct: 40, by: "by 21 Nov", tone: "accent", saving: false },
-    { id: G.os, name: "Finish Yasir OS", area: "Build", deadline: "2026-11-15", progress: "75%", pct: 75, by: "by 15 Nov", tone: "accent", saving: false },
+    { id: G.os, name: "Finish Decko", area: "Build", deadline: "2026-11-15", progress: "75%", pct: 75, by: "by 15 Nov", tone: "accent", saving: false },
     { id: G.fund, name: "1RK fund", area: "Money", deadline: "2027-01-31", progress: "₹42,000 of ₹1,00,000", pct: 42, by: "by 31 Jan 2027", tone: "accent", saving: true },
     { id: "demo-goal-travel", name: "Travel fund", area: "Money", deadline: "2027-04-30", progress: "₹26,000 of ₹50,000", pct: 52, by: "by 30 Apr 2027", tone: "accent", saving: true },
   ],

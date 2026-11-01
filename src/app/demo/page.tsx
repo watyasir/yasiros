@@ -3,8 +3,8 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { demoData } from "@/data/demo";
 
 export const metadata: Metadata = {
-  title: "Demo · Yasir OS",
-  description: "The full Yasir OS dashboard on made-up sample data. No login needed.",
+  title: "Demo",
+  description: "The full Decko dashboard on made-up sample data. No login needed.",
 };
 
 export default function DemoPage() {

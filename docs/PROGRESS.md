@@ -315,3 +315,14 @@ Same v9 look; fewer, clearer pieces. Baseline: build, lint, tsc, knip, contrast 
 3. Put a few tasks on goals (task sheet → Goal, or `goal_id` through the API) and check the Work cards.
 4. iPhone: re-open the home-screen app: 4 tabs, no pop-ups, Today tile opens the check-in, sign in with the email code inside the app.
 
+## Rebrand to "Decko" (2 Nov 2026, cloud session)
+Display name only: repo `yasiros`, `yasiros.vercel.app`, every route and API URL unchanged (calendar feeds and the finance task keep working).
+- [x] Name: manifest name + short_name, appleWebApp title, `<title>` template "<page> · Decko", welcome, login, offline, demo, share card, calendar feeds (X-WR-CALNAME "Decko · <name>", PRODID), demo gallery sample images, service worker comment; CLAUDE.md, README, DESIGN.md say "Decko (repo: yasiros)", API.md feed names
+- [x] Icon "Bento": `public/icons/icon.svg` (source); icon-192, icon-512, apple-touch-icon 180 (full bleed), maskable-512 (tiles in the centre 80%), rendered with the pre-installed Playwright; `src/app/icon.svg` (sharp tab icon), `src/app/favicon.ico` (16/32/48, RGBA PNG entries), `src/app/apple-icon.png`. The "Y" mark on the welcome page is now the Bento icon
+- [x] iPhone launch screens: 8 portrait sizes in `public/splash/` (1320×2868, 1206×2622, 1290×2796, 1179×2556, 1170×2532, 1125×2436, 828×1792, 750×1334), Candy page colour, icon at 22% of the width, linked with device-width/height/pixel-ratio media queries
+- [x] Service worker v3 (drops the v2 cache with the old icons)
+- [x] Checks: build, lint, tsc, knip, contrast clean; Chrome installability: no errors; /demo routes at 1280 and 390 clean
+
+### iPhone step (Decko)
+Delete the old home-screen icon, then in Safari open yasiros.vercel.app → Share → Add to Home Screen (Open as Web App on). Only a fresh install picks up the new name, icon and launch screen.
+

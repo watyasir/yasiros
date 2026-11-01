@@ -357,3 +357,15 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** `/demo` and `/demo/work` at 1280, and the phone tab bar.
 **Next:** the Mac steps, then the Decko rebrand.
 
+## Session 22 — 2 Nov 2026 — Rebrand: Decko
+**Goal:** A real name and icon for the app, without breaking anything that points at it.
+**What I asked Claude Code to do:** "Call the app Decko everywhere people see it, use my Bento icon for the home screen, browser tab and launch screen. Keep the repo, address, routes and API URLs as they are."
+**What got built:**
+- "Decko" in tab titles, the home-screen name, sign-in, offline page, demo and the calendar feed names. The web address and every link stay the same.
+- The Bento icon (four coloured tiles on navy) as the app icon in every size, a sharp tab icon, and a launch screen for 8 iPhone sizes.
+- The app's offline helper got a new version so phones fetch the new icon.
+**What broke and how we fixed it:** The favicon failed the build: Next.js wants the images inside a .ico with transparency information, and screenshots of a fully opaque icon don't have it. The pixels were read from a browser canvas and saved as proper transparent-capable PNGs with Python's built-in tools. The sharp tab icon didn't show at first because a hand-written icon setting hid the file-based ones; moving the home-screen icon to a file fixed it. Outside components or sites used: none.
+**What Yasir had to do himself:** Delete the old home-screen icon and add Decko again from Safari.
+**Screenshot to take:** The iPhone home screen with the Bento icon, and the launch screen.
+**Next:** the v10 Mac steps.
+

@@ -7,7 +7,7 @@ import { loadBodyChecks, loadWeightGoal } from "@/lib/body-store";
 import { todayISO } from "@/lib/trackers";
 import { saveBodyCheck } from "./actions";
 
-export const metadata: Metadata = { title: "Body check · Yasir OS" };
+export const metadata: Metadata = { title: "Body check" };
 
 export default function BodyPage() {
   return (

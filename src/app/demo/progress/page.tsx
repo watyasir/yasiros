@@ -4,7 +4,7 @@ import { demoData } from "@/data/demo";
 import { toShareCard } from "@/lib/share";
 
 export const metadata: Metadata = {
-  title: "Demo progress card · Yasir OS",
+  title: "Demo progress card",
   description: "The shareable Winter Arc card on made-up sample data.",
 };
 

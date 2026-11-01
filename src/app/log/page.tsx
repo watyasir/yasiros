@@ -9,7 +9,7 @@ import { loadTrackersWithStatus } from "@/lib/tracker-store";
 import { addDays, formatDayLabel, startingValue, todayISO, type CheckInValues } from "@/lib/trackers";
 import { saveCheckIn } from "./actions";
 
-export const metadata: Metadata = { title: "Check-in · Yasir OS" };
+export const metadata: Metadata = { title: "Check-in" };
 
 export default function LogPage() {
   return (

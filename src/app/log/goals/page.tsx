@@ -9,7 +9,7 @@ import { loadTrackers } from "@/lib/tracker-store";
 import { canSum, todayISO } from "@/lib/trackers";
 import { addGoal, deleteGoal, updateGoalProgress } from "./actions";
 
-export const metadata: Metadata = { title: "Goals · Yasir OS" };
+export const metadata: Metadata = { title: "Goals" };
 
 export default function GoalsPage() {
   return (

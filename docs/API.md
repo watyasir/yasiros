@@ -301,21 +301,21 @@ Nine colour-coded calendars for Apple Calendar, one per `cat`:
 
 | `cat` | Calendar name | Colour |
 |---|---|---|
-| `sleep` | Yasir OS · Sleep | `#7C8CE8` |
-| `shift` | Yasir OS · Shift | `#2BB3A8` |
-| `breaks` | Yasir OS · Breaks | `#F5C842` |
-| `meals` | Yasir OS · Meals | `#FF9F45` |
-| `gym` | Yasir OS · Gym & walk | `#4CD07D` |
-| `care` | Yasir OS · Self-care | `#FF7EB6` |
-| `build` | Yasir OS · Build & study | `#A78BFA` |
-| `commute` | Yasir OS · Commute | `#A1A1AA` |
-| `tasks` | Yasir OS · Tasks due | `#FF5C5C` |
+| `sleep` | Decko · Sleep | `#7C8CE8` |
+| `shift` | Decko · Shift | `#2BB3A8` |
+| `breaks` | Decko · Breaks | `#F5C842` |
+| `meals` | Decko · Meals | `#FF9F45` |
+| `gym` | Decko · Gym & walk | `#4CD07D` |
+| `care` | Decko · Self-care | `#FF7EB6` |
+| `build` | Decko · Build & study | `#A78BFA` |
+| `commute` | Decko · Commute | `#A1A1AA` |
+| `tasks` | Decko · Tasks due | `#FF5C5C` |
 
 Each feed sets `X-WR-CALNAME` and `X-APPLE-CALENDAR-COLOR`. Subscribe from **/settings → Calendar** (signed in): tap a name to open it as `webcal://`, or copy its link. `/progress` → **Subscribe in Calendar** leads there.
 
 - Phases repeat weekly on their days (India time). Dated phases (`from`/`until`) split the weeks into ranges, and each event repeats only until its range ends (`RRULE … UNTIL`), so an exam-week phase never doubles up with the one it replaces.
 - `tasks`: every task with a due date as an all-day event (done ones start with ✓).
-- Without `&cat`, the original all-in-one "Yasir OS" feed (everything above in one calendar) keeps working.
+- Without `&cat`, the original all-in-one "Decko" feed (everything above in one calendar) keeps working.
 - A wrong token or an unknown `cat` gets `404`. The token is the same one as the /progress share link, so anyone with that link could also read these feeds. The calendar app fetches them again about every hour.
 
 ---
