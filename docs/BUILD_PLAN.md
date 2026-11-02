@@ -1,4 +1,6 @@
-# Build Plan: Yasir OS
+# Build Plan: Decko (was "Yasir OS")
+
+> **All phases below are done** (19–26 Oct 2026). Later work (redesigns v8–v10, the Decko rebrand, the security pass) is in `docs/PROGRESS.md` and `docs/BUILD_LOG.md`. For the current state, read the "▶ Start here" block at the top of `docs/PROGRESS.md`.
 
 One phase = one Claude Code session. Each phase ends with something that works and that you can see. Paste the **kickoff prompt** to start that session. Don't start a new phase in the same session; start a fresh session for it (this keeps usage low).
 
@@ -112,7 +114,7 @@ Mail nudges (8b) and the Instinct link (8c) were dropped for good. Their code, d
 ---
 
 ## Later ideas (not planned yet)
-- German practice tracker, reading log, trips and "cool stuff" bucket list with saving goals
+- German practice tracker, trips and "cool stuff" bucket list (saving goals now show on Finance → "Saving for"; a reading log exists as the Pages read tracker)
 - Weekly review page fed by the Sunday review task
-- Install as a phone app (PWA)
+- Done since: install as a phone app (PWA, 29 Oct), saving goals (v10)
 - Parked 21 Oct: Zendesk-style extras (alert strip, countdown, smart tags, connected-apps strip, weekly result card, collapsible tiles, NEW tag)

@@ -394,3 +394,12 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** The green "Checks" run on GitHub.
 **Next:** the Yasir and Mac items above.
 
+## Session 24 — 2 Nov 2026 — Docs: one place to start
+**Goal:** Any new session (cloud or Mac) knows at once what's live, what's left and where everything is.
+**What I asked Claude Code to do:** "Update the files with every change and fix, so whenever a session reads them it knows exactly where things are and where to pick up."
+**What got built:** A "▶ Start here" block at the top of PROGRESS.md (what's live, database state, the checks to run, what's still open, a map of where each part lives); CLAUDE.md points sessions there and has the full folder map; API.md documents /api/health; BUILD_PLAN.md says all phases are done; the README describes v10 Decko, the security work and the checks.
+**What broke and how we fixed it:** Open items were listed in three places; now they live only in "Start here", and the older lists point to it.
+**What Yasir had to do himself:** Nothing.
+**Screenshot to take:** None.
+**Next:** the open items in "Start here".
+

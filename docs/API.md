@@ -1,6 +1,6 @@
 # API
 
-Endpoints for Claude's scheduled tasks, so logging, money updates and the task Board reach the dashboard without opening the app. All amounts and tasks below are made up.
+Endpoints for Claude's scheduled tasks, so logging, money updates and tasks reach Decko without opening the app. The addresses keep the repo's name (`yasiros.vercel.app`); the app is called Decko. `GET /api/health` (at the end) needs no token. All amounts and tasks below are made up.
 
 Base URL: `https://yasiros.vercel.app`
 
@@ -340,4 +340,18 @@ Three ways to call it:
 3. **Bigger files, step 2:** JSON `{ "path": "<from step 1>", "title": "...", "category": "..." }` files it in the gallery.
 
 The file type is checked from the file's own bytes, not its name.
+
+---
+
+## Health check: GET /api/health
+
+For an uptime monitor (e.g. UptimeRobot every 5 minutes). **No token**, and it returns no data: only whether the site and the database answer.
+
+| Situation | Answer |
+|---|---|
+| Site up, database answers | `200` `{ "ok": true, "database": "up" }` |
+| Database doesn't answer | `503` `{ "ok": false, "database": "down" }` |
+| `SUPABASE_SERVICE_ROLE_KEY` not set | `503` `{ "ok": false, "database": "not set up" }` |
+
+Never cached.
 

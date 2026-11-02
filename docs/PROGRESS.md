@@ -14,6 +14,47 @@
 | 8b | Mail nudges | ❌ Dropped (27 Oct 2026), code deleted |
 | 8c | Instinct link | ❌ Dropped (27 Oct 2026), code deleted |
 | 9 | Share + portfolio polish | ✅ Done (26 Oct 2026) |
+| v8 | Soft bento redesign + own pages | ✅ Done (30 Oct 2026), replaced by v9 |
+| v9 | Playground look, 3 themes | ✅ Done (30 Oct 2026) |
+| v10 | Focus: 4 tabs, Work goal cards, app feel | ✅ Done (1–2 Nov 2026) |
+| — | Rebrand to Decko, Bento icon | ✅ Done (2 Nov 2026) |
+| — | Security + reliability pass | ✅ Done (2 Nov 2026) |
+
+## ▶ Start here (current state, 2 Nov 2026)
+Read this block first; the sections below it are history, oldest first.
+
+**What's live** (yasiros.vercel.app, display name "Decko"): v10 Focus on the v9 Playground look. 4 tabs: Overview `/` (Today's 5 things, Next up, Money, Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards); Check-in `/log`; Settings (themes, season, trackers, calendar feeds, sign-in code, Gallery, share card, Claude's jobs). Every page again under `/demo` on fake data. `/money`, `/board`, `/winter-arc` redirect. No task pop-ups.
+
+**Database:** every file in `supabase/migrations/` (up to `20261102000001_task_goals.sql`) has been run on the live Supabase project. A new migration must be additive, and the app must keep working before it's run (catch Postgres `42703`, as `src/lib/task-store.ts` and `src/lib/tracker-store.ts` do).
+
+**Checks before every push** (GitHub Actions runs them too, `.github/workflows/checks.yml`): `npm run build`, `npm run lint`, `npx tsc --noEmit`, `npx knip`, `npm run contrast`, `npm run privacy-check -- --all`, `npm audit --omit=dev`. Push to `main`, then confirm Vercel is green: `gh api repos/watyasir/yasiros/commits/<sha>/status`.
+
+**Still open**
+- [ ] Yasir, GitHub: two-factor login; Settings → Advanced Security → Dependabot alerts + security updates on; Settings → Rules → ruleset for `main` with only "Restrict deletions" and "Block force pushes" (not "Require a pull request")
+- [ ] Yasir: free uptime monitor (e.g. UptimeRobot) on `https://yasiros.vercel.app/api/health`, every 5 minutes, email alert
+- [ ] Mac session: run `npm run backup` once to confirm it works, then weekly (or as a scheduled task)
+- Parked: typing the email's code inside the iPhone app needs custom SMTP in Supabase (an email provider sign-up). Until then the app signs in with Settings → "Sign in on another device"
+
+**Where things are**
+| What | Where |
+|---|---|
+| Spec and design rules (latest changelog wins) | `docs/DESIGN.md` |
+| API for Claude's tasks (log, summary, money, tasks, claude-jobs, day-plan, calendar, gallery, health) | `docs/API.md` |
+| What happened each session | `docs/BUILD_LOG.md` |
+| Pages and routes | `src/app/` (real), `src/app/demo/` (fake data), `src/app/api/` |
+| App shell, tabs, Check-in + Settings buttons | `src/components/dashboard/` (`Dashboard.tsx`, `Nav.tsx`, `DashboardContext.tsx`) |
+| One folder per page | `src/modules/overview`, `health`, `finance`, `work`, `gallery`; shared types in `src/modules/types.ts` |
+| Shared pieces | `src/components/` (`Tile`, `LineChart`, `Toast`, `Skeleton`, `useConfetti`, …) |
+| Turning database rows into what pages show | `src/lib/dashboard/` (`load.ts` reads, `build.ts` + `extras.ts` shape; Today's 5 things in `buildFocus`) |
+| Themes and all colours | `src/app/globals.css` (`--th-*` per theme); contrast check `scripts/contrast.mjs` |
+| Fake data for /demo | `src/data/demo/` |
+| App icon and launch screens | `public/icons/icon.svg` (source), `public/icons/*.png`, `src/app/icon.svg`, `favicon.ico`, `apple-icon.png`, `public/splash/` |
+| Offline + install | `public/sw.js` (cache version `v3`), `src/app/manifest.ts`, `src/app/offline/` |
+| Error pages, health check, robots | `src/app/error.tsx`, `global-error.tsx`, `not-found.tsx`, `src/app/api/health/`, `src/app/robots.ts` |
+| Security headers, redirects | `next.config.ts` |
+| Sign-in | `src/app/login/` (email link, email code, Settings code), `src/proxy.ts` (who may see which page), `src/lib/auth.ts`, `src/lib/signin-code.ts` |
+| Scripts | `scripts/privacy-check.mjs` (pre-commit + CI), `scripts/contrast.mjs`, `scripts/backup.mjs` (`npm run backup`, Mac only, writes git-ignored `backups/`) |
+| Environment variables (names only) | `.env.example`; real values in `.env.local` and Vercel |
 
 ## Decisions & schedule (21 Oct 2026)
 
@@ -351,7 +392,7 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 - [x] Added security headers on every response: no framing (X-Frame-Options DENY + frame-ancestors 'none'), form-action/base-uri 'self', nosniff, Referrer-Policy, HSTS, Permissions-Policy off for camera/mic/location/payment. Checked: pages, sign-in form and installability unchanged
 - [x] Packages: `npm audit --omit=dev` 0 vulnerabilities; 1 moderate warning only in the eslint dev tooling (never shipped; the suggested fix downgrades eslint)
 - [x] GitHub: secret scanning and push protection are on
-- [ ] Yasir (GitHub, this session can't change settings): turn on Dependabot alerts + security updates; add a ruleset for `main` blocking force pushes and deletion; turn on 2FA if it isn't; review collaborators, deploy keys and webhooks (should be none except Vercel)
+- → Yasir's GitHub steps (2FA, Dependabot, ruleset for `main`; collaborators, deploy keys and webhooks should be none except Vercel): tracked in "Start here" at the top
 
 ## Reliability + security pass (2 Nov 2026, cloud session)
 - [x] GitHub Actions `Checks` (.github/workflows/checks.yml) on every push to main and every pull request: privacy check over the whole repo (`npm run privacy-check -- --all`, new), contrast, lint, build, tsc, knip, `npm audit --omit=dev --audit-level=high`. Read-only permissions
@@ -361,6 +402,6 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 - [x] `GET /api/health` for an uptime monitor: 200 `{"ok":true,"database":"up"}`, 503 when the database or its key is missing. No token, no data
 - [x] `robots.txt`: search engines may list `/` and `/demo` only
 - [x] Backups: `npm run backup` (scripts/backup.mjs, reads .env.local) saves every row of the owner's 15 tables to `backups/decko-<date>.json` on the Mac; `backups/` is git-ignored
-- [ ] Yasir: set up a free uptime monitor on https://yasiros.vercel.app/api/health (e.g. UptimeRobot, every 5 minutes, email alert)
-- [ ] Mac session: run `npm run backup` once to confirm it works, then make it a weekly habit (or a scheduled task)
+- → Uptime monitor on /api/health: tracked in "Start here" at the top
+- → First `npm run backup` on the Mac: tracked in "Start here" at the top
 

@@ -8,14 +8,16 @@ It's also a portfolio project. I'm a vibe coder: I planned, designed, directed a
 
 ## What it does
 
-- **Daily check-in in under 60 seconds** on a phone: steppers, switches and 1–5 scales for every tracker, one "Done" button.
-- **Winter Arc season:** day X of 90, current and best streak, % of days with every target hit, and a 90-cell strip of the season.
-- **Workouts and body:** log sets in seconds with "Repeat last workout", see lift progress and a weekly weight chart against a goal.
-- **Tasks and goals:** a Board (To do / In progress / Waiting / Done), due-today and overdue tiles, goals linked to trackers.
-- **Shareable progress card** (`/progress`): a portrait card made for a phone screenshot, plus a private link for an accountability group.
-- **Money:** a scheduled Claude task reads an existing finance sheet and pushes a snapshot to the API; the dashboard shows it as a wallet stack (one tab per bank and card, front card = left to spend), spend vs income, a 50/20/30 split against target and the top spends.
-- **API for automations:** `POST /api/log`, `GET /api/summary` and `POST /api/money`, behind one secret token ([`docs/API.md`](docs/API.md)), so Claude's scheduled tasks can log and read without anyone opening the app.
-- **Demo mode:** `/demo` runs the whole app on made-up data, so anyone can click around.
+Four tabs, each readable at a glance:
+
+- **Overview:** today's 5 things (check-in, workout, meals, revision, reading) with what's left and the next part of the day plan; the next 3 tasks (tick one off, with Undo); money left to spend with a wallet of accounts; a one-line Winter Arc strip (day X of 90, streak, consistency).
+- **Health:** the Winter Arc season (90 dots you can scrub), weight and sleep trends over 7 / 30 / 90 days, workouts this week, today's meals and blood pressure.
+- **Finance:** wallet, spend vs income, the 50/20/30 split against target, top spends and "Saving for" goals. A scheduled Claude task reads an existing finance sheet and pushes snapshots to the API.
+- **Work:** one card per goal with its progress and open tasks; tasks without a goal sit in "Loose tasks".
+- **Daily check-in in under 60 seconds** on a phone (`/log`), plus workout logging with "Repeat last workout" and a weekly body check.
+- **Installs on a phone** as "Decko" with its own icon and launch screen, and works like an app (no bounce, fades between tabs, sign-in inside the app).
+- **API for automations** behind one secret token ([`docs/API.md`](docs/API.md)), so Claude's scheduled tasks can log, read and update without anyone opening the app; plus Apple Calendar feeds of the day plan.
+- **Shareable progress card** (`/progress`) and **demo mode** (`/demo`): the whole app on made-up data, so anyone can click around.
 
 ## Screenshots
 
@@ -23,12 +25,12 @@ All taken from `/demo` (sample data):
 
 | Screen | Where |
 |---|---|
-| Overview bento on a laptop: Winter Arc hero, Next up, Money, Check-in, Weight, Diet, Claude's jobs | [`/demo`](https://yasiros.vercel.app/demo) at 1280px |
-| The same bento on a phone, with the tab bar and a reminder toast | `/demo` at 390px |
-| Health: weight, steps and sleep line charts | [`/demo/health`](https://yasiros.vercel.app/demo/health) |
-| Board view | `/demo/board` |
+| Overview on a laptop: Today's 5 things, Next up, Money, Winter Arc strip | [`/demo`](https://yasiros.vercel.app/demo) at 1280px |
+| The same on a phone, with the bottom tab bar | `/demo` at 390px |
+| Health: Winter Arc dots, weight and sleep charts, meals | [`/demo/health`](https://yasiros.vercel.app/demo/health) |
+| Work: goal cards with their tasks | [`/demo/work`](https://yasiros.vercel.app/demo/work) |
+| Finance: wallet, 50/20/30, Saving for | [`/demo/finance`](https://yasiros.vercel.app/demo/finance) |
 | Daily check-in sheet | [`/demo/log`](https://yasiros.vercel.app/demo/log) on a phone |
-| Workout logger with "Repeat last workout" | [`/demo/log/workout`](https://yasiros.vercel.app/demo/log/workout) |
 | Shareable Winter Arc card | [`/demo/progress`](https://yasiros.vercel.app/demo/progress) on a phone |
 
 ## Stack
@@ -47,22 +49,24 @@ The look is "Playground" (v9): a bento-grid Overview with one dark hero tile and
 
 The app is built from a few generic pieces, so a new area of life is a new row, not a new feature:
 
-- **Tracker:** anything measured over time. Name, area (Health, Body, Mind, Skills, Money, Custom), type (`checkbox`, `number`, `scale_1_5`, `duration_minutes`), optional unit and a daily or weekly target. Adding one in `/settings` puts it in the check-in, the stats and the season straight away.
+- **Tracker:** anything measured over time. Name, area, type (`checkbox`, `number`, `scale_1_5`, `duration_minutes`, `time_of_day`, `choice`), optional unit, a daily or weekly target, and an optional group (like Meals or Blood pressure, which share a card on the check-in). Adding one in Settings puts it in the check-in, the stats and the season straight away.
 - **Entry:** one value for one tracker on one date.
 - **Season:** a time-boxed challenge (Winter Arc = 90 days) with a start date and per-tracker targets.
-- **Tile registry:** every Overview tile is one line in [`src/modules/registry.ts`](src/modules/registry.ts). A new module is a folder in `src/modules/` plus one entry there.
+- **Tile:** every block on every page is the same `Tile` component with a colour tone; the Overview places them in a bento grid.
 
-Workouts, tasks, goals and money have their own tables because their shape is different, but they plug into the same registry. `/demo` and the real dashboard share one data shape ([`src/modules/types.ts`](src/modules/types.ts)), so every tile works on both.
+Workouts, tasks, goals and money have their own tables because their shape is different. `/demo` and the real app share one data shape ([`src/modules/types.ts`](src/modules/types.ts)), so every page works on both.
 
-## Privacy
+## Privacy and security
 
-The repo is public; the data isn't. Real data lives only in Supabase, locked to one account by row-level security, and only one email can sign in. A pre-commit check ([`scripts/privacy-check.mjs`](scripts/privacy-check.mjs)) blocks commits that look like they contain personal details. The share card is public only through a secret token in its link and shows nothing beyond its six numbers.
+The repo is public; the data isn't. Real data lives only in Supabase, every table locked to its owner by row-level security, and only one email can sign in. A privacy check ([`scripts/privacy-check.mjs`](scripts/privacy-check.mjs)) blocks commits that look like they contain personal details, and runs over the whole repo on every push. The site sends security headers (no framing, HTTPS only), the API compares tokens in constant time, and the share card is public only through a secret token in its link.
+
+Every push runs the same checks on GitHub ([`.github/workflows/checks.yml`](.github/workflows/checks.yml)): privacy, colour contrast in all three themes, lint, build, types, dead code and known package vulnerabilities.
 
 ## How I built it with AI
 
 Every session followed the same loop: one phase per session, a short prompt from me, Claude Code builds and checks it in a real browser, then logs what happened. A few things that stood out:
 
-- **Design first, in chat.** Four design passes on a canvas before any code (editorial → Apple HIG → light "Winter dawn" → a card layout inspired by my Obsidian theme), then "Teal and grey" (v6) once the app was real, then "Soft bento" (v8), and finally "Playground" (v9) with three themes. The spec lives in `docs/DESIGN.md` and the code follows its changelog.
+- **Design first, in chat.** Four design passes on a canvas before any code (editorial → Apple HIG → light "Winter dawn" → a card layout inspired by my Obsidian theme), then "Teal and grey" (v6) once the app was real, then "Soft bento" (v8), "Playground" (v9) with three themes, and "Focus" (v10), which cut it down to four tabs. The spec lives in `docs/DESIGN.md` and the code follows its changelog.
 - **Fake data first.** Phase 1 built the whole dashboard on made-up data at `/demo`. Every later phase swapped real data into the same tiles, so the demo never broke.
 - **A privacy scare, caught early.** Before the first push, a check found real details in the design mockups (names, a card number, amounts). They were replaced before anything went public, and the pre-commit privacy check came out of it.
 - **Bugs found by looking, not guessing.** A "Log Today" button had teal text on a teal background because a global link rule won; the weight chart's labels shrank too small on phones; a 30-per-row season strip turned into dots on a phone (now 15 per row).
@@ -79,4 +83,5 @@ cp .env.example .env.local   # fill in the values you need
 npm run dev
 ```
 
-`/demo` works with no settings at all. The real dashboard needs a Supabase project (run the files in `supabase/migrations/` in order) and `ALLOWED_EMAIL`.
+`/demo` works with no settings at all. The real app needs a Supabase project (run the files in `supabase/migrations/` in order) and `ALLOWED_EMAIL`. `npm run backup` saves all your data to `backups/` (git-ignored). Contributors and AI sessions: start with the "Start here" block in [`docs/PROGRESS.md`](docs/PROGRESS.md).
+

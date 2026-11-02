@@ -6,7 +6,7 @@ It is also a **public portfolio project**. Yasir is a vibe coder: he directs, pr
 
 ## Read this first, every session
 
-1. Read `docs/PROGRESS.md` to see which phase is done and which one is next.
+1. Read the **"▶ Start here"** block at the top of `docs/PROGRESS.md`: what's live, what's still open, and where every part of the code lives. Everything below that block is history.
 2. Work on **one phase only**, the one Yasir names. Do not start the next phase on your own.
 3. Read only the files the phase needs. Do not scan the whole repo.
 4. At the end of the session:
@@ -71,16 +71,26 @@ Short version:
 ```
 src/
   app/            routes: / and /health, /finance, /work, /gallery (+ /demo/...), /log, /login, /settings, /progress, /api
-  components/     shared UI (Tile, LineChart, Chip, Segmented, ...) and the app shell (dashboard/)
-  modules/        one folder per page (overview, health, finance, work, gallery)
-  lib/            supabase client, sheets client, date + rupee helpers
+                  plus error.tsx, global-error.tsx, not-found.tsx, loading.tsx, robots.ts, manifest.ts, icons
+  components/     shared UI (Tile, LineChart, Toast, Skeleton, Chip, Segmented, ...) and the app shell (dashboard/)
+  modules/        one folder per page (overview, health, finance, work, gallery) + types.ts
+  lib/            Supabase clients, data loading and shaping (dashboard/), auth, dates, rupees
   data/demo/      fake data for /demo
+  proxy.ts        who may see which page (signed-out visitors go to /login)
+public/
+  icons/          Bento app icon (icon.svg is the source) and its PNGs
+  splash/         iPhone launch screens
+  sw.js           service worker (bump VERSION when icons or cached files change)
+scripts/          privacy-check.mjs (pre-commit + CI), contrast.mjs, backup.mjs (npm run backup)
+.github/          workflows/checks.yml (CI on every push), dependabot.yml
 docs/
-  PROGRESS.md     phase checklist
+  PROGRESS.md     "Start here" block on top, then the checklist history
   BUILD_LOG.md    what was built each session (portfolio case study material)
-  BUILD_PLAN.md   the full phased plan
+  DESIGN.md       the design spec; latest changelog entry wins
+  API.md          the API Claude's scheduled tasks use
+  BUILD_PLAN.md   the original phased plan (all phases done)
 supabase/
-  migrations/     database schema changes, in order
+  migrations/     database schema changes, in order (all run on the live project as of 2 Nov 2026)
 ```
 
 ## BUILD_LOG entry template
