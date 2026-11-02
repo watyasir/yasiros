@@ -260,7 +260,7 @@ Baseline: `npm ci`, build, lint, `tsc --noEmit` all clean (30 Oct). M4 + M10 + a
 - [x] 2. `…_weight_tracker.sql` run: success (weight is a check-in tracker)
 - [x] 3. `GALLERY_TOKEN` in Vercel Production (Secret) = the key in `~/Claude/yasiros-gallery-key.txt` (form filled by Claude, value pasted by Yasir from the clipboard, clipboard cleared after); same value in `.env.local`; redeployed, green
 - [x] 4. Signed in at 1280: `/`, `/winter-arc`, `/board`, `/money`, `/health`, `/gallery`, `/log`, `/settings` load, no console errors, no sideways scroll. Phone size (375): every `/demo` route, no sideways scroll, no target under 44px (Chrome can't emulate 375, so the signed-in phone pass is on the iPhone)
-- [x] 5. `/log`: no "Update pending"; lights out, wake, 7 meals, BP, weight, reading all show. Test check-in (weight 61.4, Breakfast swapped) saved → Overview Diet showed 6/7 with Breakfast swapped; Weight needs 2 days for a trend (as designed). Test check-in deleted afterwards (16 rows, all written by the test; nothing else was logged that day)
+- [x] 5. `/log`: no "Update pending"; lights out, wake, 7 meals, BP, weight, reading all show. Test check-in (a test weight, Breakfast swapped) saved → Overview Diet showed 6/7 with Breakfast swapped; Weight needs 2 days for a trend (as designed). Test check-in deleted afterwards (16 rows, all written by the test; nothing else was logged that day)
 - [x] 6. Today tile shows the weekday shift (12:40–11:00 PM) and "Now: Lights out" at night; M5 exam phases show in the feeds (Exam revision in Build & study, Walk in Gym & walk, Leave for exam in Commute)
 - [x] ~~7. Reminder toasts~~ No longer applies: removed in v10 Focus
 - [x] ~~8. iPhone check~~ Moved to "Open items" at the end
@@ -342,4 +342,14 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 - [x] Season targets (3 Nov): sleep 7 h, steps 10,000, new tracker Claude session 90 min/day, Pages read 10/day (was "Reading page"; no entries yet), skincare and hair yes/no; water off the check-in (archived, entries kept); study has no daily target (exam season only). Day plan: Exam revision now 10–21 Nov only (7 days before exams), Claude build block back otherwise
 
 **Status (2 Nov, cloud):** every open item is done or parked. Parked: typing the email code inside the app needs custom SMTP in Supabase (an email provider sign-up). The installed app signs in with Settings → Sign in on another device instead, so nothing is blocked.
+
+## Security check (2 Nov 2026, cloud session)
+- [x] Secrets: no API keys, tokens, passwords or private keys anywhere in the code or in all 104 commits of history. The only key is the Supabase publishable key, which is public by design (row-level security protects the data). `.env*` is ignored; `.env.example` has never had a value
+- [x] Personal data: no email, phone, bank names or amounts in the code or history. Removed today: a test weight from PROGRESS.md and real goal names (one with another person's first name). Those two are still in older commits' history (rewriting public history isn't worth it for these; keep names and health numbers out from now on)
+- [x] Database: all 15 tables have row-level security; the goal view runs as the reader; no SECURITY DEFINER functions; every trigger function pins search_path; the gallery bucket is private with owner-only policies
+- [x] Code: every server action checks the signed-in owner (login actions only accept ALLOWED_EMAIL); the API, gallery upload, share card and calendar compare tokens in constant time; redirects only go to fixed paths; the only raw HTML is the fixed theme script
+- [x] Added security headers on every response: no framing (X-Frame-Options DENY + frame-ancestors 'none'), form-action/base-uri 'self', nosniff, Referrer-Policy, HSTS, Permissions-Policy off for camera/mic/location/payment. Checked: pages, sign-in form and installability unchanged
+- [x] Packages: `npm audit --omit=dev` 0 vulnerabilities; 1 moderate warning only in the eslint dev tooling (never shipped; the suggested fix downgrades eslint)
+- [x] GitHub: secret scanning and push protection are on
+- [ ] Yasir (GitHub, this session can't change settings): turn on Dependabot alerts + security updates; add a ruleset for `main` blocking force pushes and deletion; turn on 2FA if it isn't; review collaborators, deploy keys and webhooks (should be none except Vercel)
 
