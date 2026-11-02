@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { guessGoal } from "@/lib/goal-guess";
 import { fileNameFor, type GalleryItem, type GalleryMime } from "@/lib/gallery";
 import { TASK_STATUSES, taskProblem, type NewTask, type TaskStatus } from "@/lib/tasks";
 
@@ -29,10 +30,17 @@ async function withGoalFallback(save: (withGoal: boolean) => PromiseLike<{ error
   return { ok: true };
 }
 
-/** Adds a task from the Work page. */
+/** Adds a task from the Work page. Without a goal picked, it goes on the goal its history points to. */
 export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
   if (taskProblem(task)) return { ok: false };
   const { supabase, user } = await requireUser();
+  if (!task.goalId) {
+    const [goals, history] = await Promise.all([
+      supabase.from("goals").select("id, title, area"),
+      supabase.from("tasks").select("title, area, goal_id").not("goal_id", "is", null),
+    ]);
+    if (goals.data && history.data) task = { ...task, goalId: guessGoal({ title: task.title, area: task.area }, goals.data, history.data) };
+  }
   return withGoalFallback((g) => supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task, g) }));
 }
 

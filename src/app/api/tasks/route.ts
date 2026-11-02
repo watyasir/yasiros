@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { guessGoal } from "@/lib/goal-guess";
 import { apiError, apiOk, authorizeApi, readJson } from "@/lib/api";
 import { apiOwner, parseStatusFilter, parseTaskUpserts, TASK_API_COLUMNS } from "@/lib/task-api";
 import type { Owner } from "@/lib/tasks";
@@ -74,6 +75,17 @@ export async function POST(request: Request) {
   const fresh = parsed.tasks.filter((t) => !known.has(t.external_id));
   const untitled = fresh.find((t) => !t.title);
   if (untitled) return apiError(400, `title: "${untitled.external_id}" is a new task, so it needs a title.`);
+
+  // New tasks sent without goal_id go on the goal their history points to (src/lib/goal-guess.ts).
+  if (hasGoal && fresh.some((t) => t.goal_id === undefined)) {
+    const [goals, history] = await Promise.all([
+      supabase.from("goals").select("id, title, area").eq("user_id", ownerId),
+      supabase.from("tasks").select("title, area, goal_id").eq("user_id", ownerId).not("goal_id", "is", null),
+    ]);
+    if (goals.data && history.data) {
+      for (const t of fresh) if (t.goal_id === undefined) t.goal_id = guessGoal({ title: t.title!, area: t.area ?? null }, goals.data, history.data);
+    }
+  }
 
   // Missing fields on a new task take the table's defaults (To do, owner Yasir, no area).
   const inserted = fresh.length
