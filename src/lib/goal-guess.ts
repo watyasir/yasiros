@@ -1,8 +1,8 @@
 /*
   Which goal a new task belongs to, when nobody said (a task from Claude through the API, or one
   added on Work without a goal). Learned from history: the goals that earlier tasks with the same
-  area went to, plus how many title words it shares with a goal's name and its tasks. Files the
-  task only when one goal clearly wins; otherwise it stays a loose task.
+  area went to, plus how many title words it shares with a goal's name and its tasks. When no
+  goal clearly wins, the task gets a new goal of its own (Yasir, 3 Nov 2026: nothing stays loose).
 */
 
 interface PastTask {
@@ -50,3 +50,15 @@ export function guessGoal(task: { title: string; area: string | null }, goals: G
   // Clear winner: strong enough, and well ahead of the runner-up.
   return best.score >= 1 && best.score - (next?.score ?? 0) >= 0.5 ? best.id : null;
 }
+
+/**
+ * A new goal for a task that fits none: named after its area ("Shopping"), or its first words
+ * when it has none, ending on the task's due date. Its target is its task count (1 to start).
+ */
+export function newGoalFor(task: { title: string; area: string | null; due_date?: string | null }) {
+  const area = task.area?.trim();
+  const fromTitle = [...words(task.title)].slice(0, 3).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+  const title = (area || fromTitle || "Other tasks").slice(0, 60);
+  return { title, area: area ?? "", target: 1, unit: "tasks", deadline: task.due_date ?? null };
+}
+

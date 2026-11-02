@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { guessGoal } from "@/lib/goal-guess";
+import { guessGoal, newGoalFor } from "@/lib/goal-guess";
 import { fileNameFor, type GalleryItem, type GalleryMime } from "@/lib/gallery";
 import { TASK_STATUSES, taskProblem, type NewTask, type TaskStatus } from "@/lib/tasks";
 
@@ -30,7 +30,7 @@ async function withGoalFallback(save: (withGoal: boolean) => PromiseLike<{ error
   return { ok: true };
 }
 
-/** Adds a task from the Work page. Without a goal picked, it goes on the goal its history points to. */
+/** Adds a task from the Work page. Without a goal picked, it goes on the goal its history points to, or a new one. */
 export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
   if (taskProblem(task)) return { ok: false };
   const { supabase, user } = await requireUser();
@@ -39,7 +39,15 @@ export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
       supabase.from("goals").select("id, title, area"),
       supabase.from("tasks").select("title, area, goal_id").not("goal_id", "is", null),
     ]);
-    if (goals.data && history.data) task = { ...task, goalId: guessGoal({ title: task.title, area: task.area }, goals.data, history.data) };
+    if (goals.data && history.data) {
+      let goalId = guessGoal({ title: task.title, area: task.area }, goals.data, history.data);
+      if (!goalId) {
+        const goal = newGoalFor({ title: task.title, area: task.area, due_date: task.due || null });
+        goalId = goals.data.find((g) => g.title.toLowerCase() === goal.title.toLowerCase())?.id ?? null;
+        if (!goalId) goalId = (await supabase.from("goals").insert({ ...goal, user_id: user.id }).select("id").single()).data?.id ?? null;
+      }
+      task = { ...task, goalId };
+    }
   }
   return withGoalFallback((g) => supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task, g) }));
 }

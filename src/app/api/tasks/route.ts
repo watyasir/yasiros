@@ -1,5 +1,5 @@
 import { revalidatePath } from "next/cache";
-import { guessGoal } from "@/lib/goal-guess";
+import { guessGoal, newGoalFor } from "@/lib/goal-guess";
 import { apiError, apiOk, authorizeApi, readJson } from "@/lib/api";
 import { apiOwner, parseStatusFilter, parseTaskUpserts, TASK_API_COLUMNS } from "@/lib/task-api";
 import type { Owner } from "@/lib/tasks";
@@ -76,14 +76,30 @@ export async function POST(request: Request) {
   const untitled = fresh.find((t) => !t.title);
   if (untitled) return apiError(400, `title: "${untitled.external_id}" is a new task, so it needs a title.`);
 
-  // New tasks sent without goal_id go on the goal their history points to (src/lib/goal-guess.ts).
+  // New tasks sent without goal_id go on the goal their history points to, or a new goal of
+  // their own when none fits (src/lib/goal-guess.ts). Tasks in one call share a new goal by name.
   if (hasGoal && fresh.some((t) => t.goal_id === undefined)) {
     const [goals, history] = await Promise.all([
       supabase.from("goals").select("id, title, area").eq("user_id", ownerId),
       supabase.from("tasks").select("title, area, goal_id").eq("user_id", ownerId).not("goal_id", "is", null),
     ]);
     if (goals.data && history.data) {
-      for (const t of fresh) if (t.goal_id === undefined) t.goal_id = guessGoal({ title: t.title!, area: t.area ?? null }, goals.data, history.data);
+      for (const t of fresh) {
+        if (t.goal_id !== undefined) continue;
+        const task = { title: t.title!, area: t.area ?? null, due_date: t.due_date ?? null };
+        t.goal_id = guessGoal(task, goals.data, history.data);
+        if (t.goal_id) continue;
+        const goal = newGoalFor(task);
+        const twin = goals.data.find((g) => g.title.toLowerCase() === goal.title.toLowerCase());
+        if (twin) {
+          t.goal_id = twin.id;
+          continue;
+        }
+        const made = await supabase.from("goals").insert({ ...goal, user_id: ownerId }).select("id, title, area").single();
+        if (made.error) return apiError(500, "Couldn't make a goal for the new task.");
+        goals.data.push(made.data);
+        t.goal_id = made.data.id;
+      }
     }
   }
 
