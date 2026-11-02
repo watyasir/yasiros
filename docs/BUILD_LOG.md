@@ -403,3 +403,18 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** None.
 **Next:** the open items in "Start here".
 
+## Session 25 — 3 Nov 2026 — Goals, auto-filing, email code, phone polish
+**Goal:** Put every task under a goal, file new tasks by themselves, add the code to the sign-in email, and make the phone app feel smoother.
+**What I asked Claude Code to do:** "Make goals and file every task; new tasks should land on the right goal or a new one; the code in the sign-in email via Resend; fill the top-left gap, a bolder bottom bar, no lag between pages."
+**What got built:**
+- Goals and tasks (data only, names stay in Supabase): every open task sits under a goal. New tasks without a goal are filed from history by `src/lib/goal-guess.ts` (same-area share + shared title words); when nothing fits, the task gets a new goal of its own. Tested on the real tasks with each goal hidden: 30 of 31 right.
+- Sign-in email from Decko through Resend (free) with an 8-digit code to type inside the iPhone app.
+- Phone: the Decko mark and name fill the empty top-left corner; the tab bar floats as a rounded card with a dark pill on the active tab and bolder icons.
+- Speed: the dashboard data is now a private cache, so each tab's preload carries it and a first tap opens without waiting; tabs already visited open in about 20 ms. Service worker v4 takes over at once instead of waiting for every window to close.
+**What broke and how we fixed it:**
+- Taps looked like full page reloads in the testing browser pane. A long hunt showed it only happened while that pane was hidden and idle; in a visible Chrome every tap switched in place (19–24 ms after a visit). Lesson: test page switches in a visible browser.
+- A safety check stopped posting made-up test tasks into the real list and pushing without a yes.
+**What Yasir had to do himself:** sign up at Resend and paste its key into Supabase; sign in once in the test browser.
+**Screenshot to take:** the phone Work page with the floating tab bar.
+**Next:** re-add the iPhone home-screen app.
+
