@@ -42,7 +42,7 @@ export function Dashboard({
     <ToastProvider>
     <DashboardProvider data={data} view={view} taskActions={taskActions} galleryActions={galleryActions}>
       <ThemeSync theme={data.theme} remember={data.basePath === ""} />
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-4 pt-[max(16px,env(safe-area-inset-top))] pb-[calc(96px+env(safe-area-inset-bottom))] sm:px-6 min-[561px]:pb-12">
+      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-4 pt-[max(16px,env(safe-area-inset-top))] pb-[calc(110px+env(safe-area-inset-bottom))] sm:px-6 min-[561px]:pb-12">
         <TopBar />
         {view === "overview" ? (
           <OverviewHeader />

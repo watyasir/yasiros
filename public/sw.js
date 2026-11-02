@@ -3,10 +3,12 @@
   - App shell and static files (/_next/static, /icons, the offline page): cache first.
     Their file names change when their content does, so a cached copy is never stale.
   - Pages, /api and sign-in are never cached. Offline, a page opens the offline card instead.
-  It never reloads open pages: a new version takes over on the next visit.
+  A new version takes over at once (skipWaiting + claim) without reloading anything: an old
+  worker left in charge of an open app made tab taps reload the whole page (found 3 Nov 2026).
+  Page loads use navigation preload, so going through the worker adds no wait.
   Bump VERSION to drop every old cache.
 */
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC = `static-${VERSION}`;
 const OFFLINE = "/offline";
 
@@ -19,6 +21,7 @@ self.addEventListener("install", (event) => {
       const html = await res.clone().text();
       await cache.put(OFFLINE, res);
       await cache.addAll([...html.matchAll(/href="(\/_next\/static\/[^"]+\.css)"/g)].map((m) => m[1]));
+      await self.skipWaiting();
     })(),
   );
 });
@@ -27,6 +30,8 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys()) if (key !== STATIC) await caches.delete(key);
+      if (self.registration.navigationPreload) await self.registration.navigationPreload.enable();
+      await self.clients.claim();
     })(),
   );
 });
@@ -40,8 +45,17 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
     event.respondWith(cacheFirst(request));
   } else if (request.mode === "navigate") {
-    // Always the network; the offline card only when there is none.
-    event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE)) || Response.error()));
+    // Always the network (the preloaded response when the browser started it already);
+    // the offline card only when there is none.
+    event.respondWith(
+      (async () => {
+        try {
+          return (await event.preloadResponse) || (await fetch(request));
+        } catch {
+          return (await caches.match(OFFLINE)) || Response.error();
+        }
+      })(),
+    );
   }
 });
 
