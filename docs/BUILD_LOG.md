@@ -381,3 +381,16 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** /work with goal cards, once goals exist.
 **Next:** goals → file tasks under them; meal slot names; season targets.
 
+## Session 23 — 2 Nov 2026 — Security and reliability
+**Goal:** Make sure nothing private leaked and nobody can get in; make the site harder to break.
+**What I asked Claude Code to do:** "Check for leaks, make sure nobody can hack the code or the repo, then do everything you can to make the site more reliable and secure."
+**What got built:**
+- A full check: no keys or passwords anywhere in the code or its history; every database table locked to its owner; every action checks it's Yasir.
+- Security headers so no other site can show Decko inside a frame or trick a click.
+- Automatic checks on GitHub after every push (privacy, contrast, lint, build, types, dead code, known package problems), and weekly package update suggestions.
+- Friendly error and "page not found" pages instead of blank screens; a health address for an uptime monitor; search engines kept off the private pages; a one-command backup of all the data to the Mac.
+**What broke and how we fixed it:** A test weight and real goal names had slipped into the public progress notes; they were replaced with neutral wording. Some GitHub settings can't be changed from a cloud session, so they're steps for Yasir. Outside components or sites used: none (UptimeRobot is suggested, not built in).
+**What Yasir had to do himself:** 2FA, Dependabot alerts and a branch ruleset on GitHub; an uptime monitor.
+**Screenshot to take:** The green "Checks" run on GitHub.
+**Next:** the Yasir and Mac items above.
+

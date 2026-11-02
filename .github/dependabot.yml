@@ -1,0 +1,17 @@
+# Weekly update suggestions for packages and the GitHub Actions above, grouped into one pull
+# request each so they're easy to review (the Checks workflow runs on them).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      all-packages:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

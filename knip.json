@@ -1,5 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["public/sw.js"],
-  "ignoreDependencies": ["server-only"]
+  "entry": [
+    "public/sw.js",
+    "scripts/*.mjs"
+  ],
+  "ignoreDependencies": [
+    "server-only"
+  ]
 }

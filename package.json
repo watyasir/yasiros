@@ -9,7 +9,8 @@
     "lint": "eslint",
     "prepare": "git config core.hooksPath scripts/hooks || true",
     "privacy-check": "node scripts/privacy-check.mjs",
-    "contrast": "node scripts/contrast.mjs"
+    "contrast": "node scripts/contrast.mjs",
+    "backup": "node --env-file=.env.local scripts/backup.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -27,5 +28,8 @@
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

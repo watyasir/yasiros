@@ -39,6 +39,7 @@ Keep dependencies few. Ask before adding any new library.
 - **Logging must be fast.** The daily check-in should take under 60 seconds on a phone. If a feature makes logging slower, say so before building it.
 - **Mobile first.** Design for a 390px wide phone screen, then widen for desktop.
 - **Keep the code lean:** delete unused code, no hidden or parked features. Run a dead-code check (`npx knip`) before finishing a phase.
+- **Checks must stay green.** GitHub Actions runs the privacy check, contrast, lint, build, types, knip and `npm audit` on every push (`.github/workflows/checks.yml`); fix a red run before anything else. Back up with `npm run backup` (Mac only; never commit `backups/`).
 - All money in Indian rupees, formatted Indian style: ₹1,25,000. Dates as `18 Oct 2026`. Timezone `Asia/Kolkata`.
 
 ## How the app grows (important)

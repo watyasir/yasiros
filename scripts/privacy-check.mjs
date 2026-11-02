@@ -5,7 +5,8 @@
     - a phone number
     - a long account or card number
     - any .env file (only .env.example is allowed)
-  It only looks at lines being added in this commit, not the whole repo.
+  It only looks at lines being added in this commit. With --all (the CI checks on GitHub) it
+  scans every tracked file instead.
 
   False alarm? Put "privacy-check: allow" on that line, or (last resort)
   commit with --no-verify after checking by eye.
@@ -37,9 +38,21 @@ const rules = [
 ];
 
 const problems = [];
+const all = process.argv.includes("--all");
+
+/** Checks one line of one file against every rule. */
+function check(file, here, line) {
+  if (SKIP_FILES.some((r) => r.test(file)) || line.includes(ALLOW_MARKER)) return;
+  for (const rule of rules) {
+    for (const m of line.matchAll(rule.regex)) {
+      if (rule.allow?.(m[0])) continue;
+      problems.push(`${file}:${here}: looks like ${rule.name}: "${m[0].trim()}"`);
+    }
+  }
+}
 
 // 1. .env files
-const staged = git("diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z").split("\0").filter(Boolean);
+const staged = (all ? git("ls-files", "-z") : git("diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z")).split("\0").filter(Boolean);
 for (const file of staged) {
   const base = file.split("/").pop();
   if (/^\.env(\..+)?$/.test(base) && base !== ".env.example") {
@@ -47,8 +60,16 @@ for (const file of staged) {
   }
 }
 
-// 2. Added lines
-const diff = git("diff", "--cached", "-U0", "--no-color", "--diff-filter=ACMR");
+// 2. Added lines (or, with --all, every line of every tracked text file)
+if (all) {
+  for (const f of staged) {
+    if (SKIP_FILES.some((r) => r.test(f))) continue;
+    git("show", `HEAD:${f}`)
+      .split("\n")
+      .forEach((line, i) => check(f, i + 1, line));
+  }
+}
+const diff = all ? "" : git("diff", "--cached", "-U0", "--no-color", "--diff-filter=ACMR");
 let file = null;
 let lineNo = 0;
 for (const raw of diff.split("\n")) {
@@ -62,19 +83,11 @@ for (const raw of diff.split("\n")) {
     continue;
   }
   if (!file || !raw.startsWith("+")) continue;
-  const line = raw.slice(1);
-  const here = lineNo++;
-  if (SKIP_FILES.some((r) => r.test(file)) || line.includes(ALLOW_MARKER)) continue;
-  for (const rule of rules) {
-    for (const m of line.matchAll(rule.regex)) {
-      if (rule.allow?.(m[0])) continue;
-      problems.push(`${file}:${here}: looks like ${rule.name}: "${m[0].trim()}"`);
-    }
-  }
+  check(file, lineNo++, raw.slice(1));
 }
 
 if (problems.length) {
-  console.error("\n✋ Privacy check blocked this commit. The repo is public.\n");
+  console.error(`\n✋ Privacy check ${all ? "found these in the repo" : "blocked this commit"}. The repo is public.\n`);
   for (const p of problems) console.error("  - " + p);
   console.error(
     `\nMove real data to Supabase or .env.local. If it's a false alarm, add "${ALLOW_MARKER}" to that line.\n`,

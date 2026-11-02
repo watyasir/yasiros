@@ -1,0 +1,41 @@
+# Runs on every push to main and every pull request: the same checks as before a deploy.
+# A red cross on GitHub means something broke; Vercel still deploys, so look at it straight away.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - name: Privacy (no emails, phone or account numbers, no .env files)
+        run: npm run privacy-check -- --all
+      - name: Contrast (all 3 themes)
+        run: npm run contrast
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Types
+        run: npx tsc --noEmit
+      - name: Dead code
+        run: npx --yes knip@6
+      - name: Production packages have no known vulnerabilities
+        run: npm audit --omit=dev --audit-level=high

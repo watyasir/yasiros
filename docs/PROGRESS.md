@@ -353,3 +353,14 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 - [x] GitHub: secret scanning and push protection are on
 - [ ] Yasir (GitHub, this session can't change settings): turn on Dependabot alerts + security updates; add a ruleset for `main` blocking force pushes and deletion; turn on 2FA if it isn't; review collaborators, deploy keys and webhooks (should be none except Vercel)
 
+## Reliability + security pass (2 Nov 2026, cloud session)
+- [x] GitHub Actions `Checks` (.github/workflows/checks.yml) on every push to main and every pull request: privacy check over the whole repo (`npm run privacy-check -- --all`, new), contrast, lint, build, tsc, knip, `npm audit --omit=dev --audit-level=high`. Read-only permissions
+- [x] Dependabot config (.github/dependabot.yml): one grouped package update PR a week (max 3 open), GitHub Actions monthly
+- [x] Node pinned to 22.x (`engines`), so Vercel and CI build on the same version as here
+- [x] Error pages: `app/error.tsx` (a page crashes → "Something went wrong" + Try again + error code), `app/global-error.tsx` (even the layout fails), `app/not-found.tsx` (bad links). Never a blank screen
+- [x] `GET /api/health` for an uptime monitor: 200 `{"ok":true,"database":"up"}`, 503 when the database or its key is missing. No token, no data
+- [x] `robots.txt`: search engines may list `/` and `/demo` only
+- [x] Backups: `npm run backup` (scripts/backup.mjs, reads .env.local) saves every row of the owner's 15 tables to `backups/decko-<date>.json` on the Mac; `backups/` is git-ignored
+- [ ] Yasir: set up a free uptime monitor on https://yasiros.vercel.app/api/health (e.g. UptimeRobot, every 5 minutes, email alert)
+- [ ] Mac session: run `npm run backup` once to confirm it works, then make it a weekly habit (or a scheduled task)
+
