@@ -338,6 +338,6 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 
 **Yasir:**
 - [ ] iPhone: delete the old home-screen icon, re-add from Safari (Share → Add to Home Screen, Open as Web App on); check the Decko name, Bento icon and launch screen; sign in inside the app with the code from the email; airplane mode → offline card
-- [ ] Meal slot names: the placeholders are Pre-gym, Breakfast, Lunch, Snack 1, Dinner, Snack 2, Night; say the real ones and the Mac session renames them
-- [ ] Season targets: pick a daily target per tracker (sleep, water, steps, study…); the Mac session sets them in Settings
+- [x] Meal slot names (3 Nov): the 7 slots renamed to Yasir's real meals (data only, trackers and entries kept)
+- [x] Season targets (3 Nov): sleep 7 h, steps 10,000, new tracker Claude session 90 min/day, Pages read 10/day (was "Reading page"; no entries yet), skincare and hair yes/no; water off the check-in (archived, entries kept); study has no daily target (exam season only). Day plan: Exam revision now 10–21 Nov only (7 days before exams), Claude build block back otherwise
 
