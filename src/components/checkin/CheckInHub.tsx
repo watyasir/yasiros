@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
-import { isSectionKey, SECTIONS } from "@/lib/checkin-sections";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState, type MouseEvent, type ReactNode } from "react";
+import { isSectionKey, SECTIONS, type SectionKey } from "@/lib/checkin-sections";
 import type { CheckInValues, Tracker } from "@/lib/trackers";
 import type { SaveCheckin } from "@/modules/types";
 import { SectionSheet } from "./SectionSheet";
@@ -44,12 +44,28 @@ export function CheckInHub({
   moreLinks: ReactNode;
   footer?: ReactNode;
 }) {
-  const router = useRouter();
   const path = usePathname();
   const asked = useSearchParams().get("section");
-  const section = isSectionKey(asked) ? asked : null;
+  const fromUrl = isSectionKey(asked) ? asked : null;
+  // The sheet opens straight from the tap; the address follows (history API, which Next keeps in
+  // step with useSearchParams), so Back and a shared /log?section=… link both work.
+  const [section, setSection] = useState<SectionKey | null>(fromUrl);
+  const [lastUrl, setLastUrl] = useState(fromUrl);
+  if (lastUrl !== fromUrl) {
+    setLastUrl(fromUrl);
+    setSection(fromUrl);
+  }
   const checkin = useSectionSave({ trackers, values, saved, workedOut }, save);
-  const close = () => router.replace(path, { scroll: false });
+  const open = (key: SectionKey) => (e: MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return; // a new tab still gets the address
+    e.preventDefault();
+    setSection(key);
+    window.history.pushState(null, "", `${path}?section=${key}`);
+  };
+  const close = () => {
+    setSection(null);
+    window.history.replaceState(null, "", path);
+  };
   const row =
     "press flex min-h-[56px] items-center justify-between gap-3 border-t border-line text-[17px] text-ink no-underline first:border-t-0 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
@@ -71,7 +87,7 @@ export function CheckInHub({
         {SECTIONS.map((s) => {
           const done = checkin.done(s.key);
           return (
-            <Link key={s.key} href={`${path}?section=${s.key}`} scroll={false} className={row}>
+            <a key={s.key} href={`${path}?section=${s.key}`} onClick={open(s.key)} className={row}>
               <span className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
@@ -85,10 +101,10 @@ export function CheckInHub({
               <span aria-hidden="true" className="text-soft">
                 ›
               </span>
-            </Link>
+            </a>
           );
         })}
-        <Link href={`${path}?section=more`} scroll={false} className={row}>
+        <a href={`${path}?section=more`} onClick={open("more")} className={row}>
           <span className="flex items-center gap-3">
             <span aria-hidden="true" className="grid size-7 place-items-center rounded-full bg-fill-strong text-sm font-bold text-soft">
               +
@@ -99,7 +115,7 @@ export function CheckInHub({
           <span aria-hidden="true" className="text-soft">
             ›
           </span>
-        </Link>
+        </a>
       </nav>
 
       {footer}

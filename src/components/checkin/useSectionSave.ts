@@ -19,8 +19,10 @@ export function useSectionSave(base: { trackers: Tracker[]; values: CheckInValue
   const toast = useToast();
   const [local, setLocal] = useState({ base, values: base.values, saved: new Set(base.saved) });
   const busy = useRef(false);
-  // New server data (after a save, or a page refresh) replaces what was shown.
-  if (local.base !== base) setLocal({ base, values: base.values, saved: new Set(base.saved) });
+  // New server data (after a save, or a page refresh) replaces what was shown. Compared by its
+  // parts, so a caller that builds the object inline doesn't reset it on every render.
+  const changed = local.base.values !== base.values || local.base.saved !== base.saved || local.base.trackers !== base.trackers || local.base.workedOut !== base.workedOut;
+  if (changed) setLocal({ base, values: base.values, saved: new Set(base.saved) });
 
   const done = (key: FocusKey) => sectionDone(key, base.trackers, (t) => (local.saved.has(t.id) ? local.values[t.id] : undefined), base.workedOut);
 
