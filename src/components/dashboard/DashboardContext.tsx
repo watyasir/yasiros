@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { useToast } from "@/components/Toast";
 import type { NewTask, Task, TaskStatus } from "@/lib/tasks";
-import type { DashboardData, GalleryActions, TaskActions, ViewId } from "@/modules/types";
+import type { DashboardData, GalleryActions, SaveCheckin, TaskActions, ViewId } from "@/modules/types";
 
 interface DashboardState {
   data: DashboardData;
@@ -18,6 +18,8 @@ interface DashboardState {
   taskError: string | null;
   /** Real dashboard only: lists and deletes gallery files. */
   galleryActions?: GalleryActions;
+  /** Real dashboard only: saves one check-in section's values for today (the demo pretends). */
+  saveCheckin?: SaveCheckin;
 }
 
 /** A saved sheet as it shows on the Board straight away. */
@@ -40,6 +42,7 @@ export function DashboardProvider({
   view,
   taskActions,
   galleryActions,
+  saveCheckin,
   children,
 }: {
   data: DashboardData;
@@ -47,6 +50,7 @@ export function DashboardProvider({
   /** Real dashboard only: saves task changes. */
   taskActions?: TaskActions;
   galleryActions?: GalleryActions;
+  saveCheckin?: SaveCheckin;
   children: ReactNode;
 }) {
   const toast = useToast();
@@ -96,6 +100,7 @@ export function DashboardProvider({
     deleteTask,
     taskError,
     galleryActions,
+    saveCheckin,
   };
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

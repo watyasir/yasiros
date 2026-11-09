@@ -6,6 +6,7 @@ import { PageSkeleton } from "@/components/Skeleton";
 import { currentOwner } from "@/lib/auth";
 import { loadDashboardData } from "@/lib/dashboard/load";
 import type { ViewId } from "@/modules/types";
+import { saveCheckIn } from "./log/actions";
 import { addTask, deleteGalleryItem, deleteTask, listGallery, moveTask, updateTask } from "./actions";
 
 /**
@@ -37,6 +38,7 @@ async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.Re
       view={view}
       taskActions={{ add: addTask, update: updateTask, move: moveTask, remove: deleteTask }}
       galleryActions={{ list: listGallery, remove: deleteGalleryItem }}
+      saveCheckin={saveCheckIn}
     />
   );
 }

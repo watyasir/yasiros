@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { assertValidValue, todayISO, type CheckInValues } from "@/lib/trackers";
-import type { SaveResult } from "@/components/checkin/CheckIn";
+import type { SaveResult } from "@/lib/body";
 
 /** Saves today's check-in: one entry per tracker, replacing anything already logged today. */
 export async function saveCheckIn(values: CheckInValues): Promise<SaveResult> {

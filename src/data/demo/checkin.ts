@@ -1,5 +1,7 @@
+import { SECTIONS, sectionTrackers } from "@/lib/checkin-sections";
 import { defaultTrackers } from "@/lib/default-trackers";
 import type { CheckInValues, Tracker } from "@/lib/trackers";
+import type { DashboardData } from "@/modules/types";
 
 /** The default trackers with made-up ids and values, for /demo/log. */
 export const demoTrackers: Tracker[] = defaultTrackers.map((t) => ({
@@ -39,3 +41,16 @@ const sample: Record<string, number> = {
 };
 
 export const demoCheckInValues: CheckInValues = Object.fromEntries(demoTrackers.map((t) => [t.id, sample[t.slug]]));
+
+/*
+  The Today card's section sheets on /demo. Matches the demo's "3 of 5": sleep, workout and
+  revision saved today; meals and reading start on their usual values but aren't saved yet.
+*/
+const sectionOwn = SECTIONS.flatMap((s) => sectionTrackers(s.key, demoTrackers));
+export const demoCheckin: DashboardData["checkin"] = {
+  trackers: sectionOwn,
+  values: Object.fromEntries(sectionOwn.map((t) => [t.id, demoCheckInValues[t.id]])),
+  saved: [...sectionTrackers("sleep", demoTrackers), ...sectionTrackers("workout", demoTrackers), ...sectionTrackers("revision", demoTrackers)].map((t) => t.id),
+  workedOut: true,
+};
+

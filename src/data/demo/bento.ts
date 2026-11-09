@@ -29,11 +29,11 @@ export const demoBento: Pick<
   // 18 Oct 2026 is a Sunday.
   plan: { shift: "Weekend off", now: "Rest and review till 9:00 PM", shiftStart: 810, shiftEnd: 1350, next: "Lights out at 12:30 AM" },
   focus: [
-    { label: "Check-in", done: true },
-    { label: "Workout", done: true },
-    { label: "Meals", done: false },
-    { label: "Revision", done: true },
-    { label: "Reading", done: false },
+    { key: "sleep", label: "Sleep", done: true },
+    { key: "workout", label: "Workout", done: true },
+    { key: "meals", label: "Meals", done: false },
+    { key: "revision", label: "Revision", done: true },
+    { key: "reading", label: "Reading", done: false },
   ],
   weight: {
     unit: "kg",

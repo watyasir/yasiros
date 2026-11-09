@@ -1,3 +1,6 @@
+import type { FocusKey } from "@/lib/checkin-sections";
+import type { SaveResult } from "@/lib/body";
+import type { CheckInValues, Tracker } from "@/lib/trackers";
 import type { GalleryItem } from "@/lib/gallery";
 import type { ThemeId } from "@/lib/theme";
 import type { Tone } from "@/lib/tones";
@@ -40,6 +43,9 @@ export interface Account {
 }
 
 /** Saves task changes. Only the real dashboard passes these; the demo changes stay on the page. */
+/** Saves today's values for one check-in section; only the trackers sent change. */
+export type SaveCheckin = (values: CheckInValues) => Promise<SaveResult>;
+
 /** Reads and deletes gallery files. Only the real dashboard passes these; the demo uses data.gallery. */
 export interface GalleryActions {
   list: () => Promise<{ ok: true; items: GalleryItem[] } | { ok: false }>;
@@ -120,7 +126,13 @@ export interface DashboardData {
    * Today's 5 things (Overview "Today" tile), from today's check-in data (DESIGN.md §4 has the
    * mapping): check-in logged, workout or walk, all 7 meals logged, study/revision, reading.
    */
-  focus: { label: string; done: boolean }[];
+  focus: { key: FocusKey; label: string; done: boolean }[];
+  /**
+   * What the Today card's section sheets need (v10.2): the 5 sections' trackers, the values the
+   * sheet starts on (today's, else the last one or a sensible default), whether a session was
+   * logged today (counts as Workout), and the ids saved today.
+   */
+  checkin: { trackers: Tracker[]; values: CheckInValues; saved: string[]; workedOut: boolean };
   /** Hours: wake time minus lights out, else the Sleep tracker. */
   sleep: Point[];
   /** Today's meal slots. status = the logged option ("Planned", "Swapped", "Skipped"), null = not logged. */

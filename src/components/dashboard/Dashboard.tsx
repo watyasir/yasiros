@@ -7,7 +7,7 @@ import { GalleryView } from "@/modules/gallery/GalleryView";
 import { HealthView } from "@/modules/health/HealthView";
 import { OverviewHeader } from "@/modules/overview/OverviewHeader";
 import { OverviewView } from "@/modules/overview/OverviewView";
-import type { DashboardData, GalleryActions, TaskActions, ViewId } from "@/modules/types";
+import type { DashboardData, GalleryActions, SaveCheckin, TaskActions, ViewId } from "@/modules/types";
 import { WorkView } from "@/modules/work/WorkView";
 import { DashboardProvider } from "./DashboardContext";
 import { TabBar, TopBar } from "./Nav";
@@ -30,17 +30,19 @@ export function Dashboard({
   view,
   taskActions,
   galleryActions,
+  saveCheckin,
 }: {
   data: DashboardData;
   view: ViewId;
   taskActions?: TaskActions;
   galleryActions?: GalleryActions;
+  saveCheckin?: SaveCheckin;
 }) {
   const View = VIEWS[view];
   const { title, subtitle } = data.views[view];
   return (
     <ToastProvider>
-    <DashboardProvider data={data} view={view} taskActions={taskActions} galleryActions={galleryActions}>
+    <DashboardProvider data={data} view={view} taskActions={taskActions} galleryActions={galleryActions} saveCheckin={saveCheckin}>
       <ThemeSync theme={data.theme} remember={data.basePath === ""} />
       <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-5 px-4 pt-[max(16px,env(safe-area-inset-top))] pb-[calc(110px+env(safe-area-inset-bottom))] sm:px-6 min-[561px]:pb-12">
         <TopBar />

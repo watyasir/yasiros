@@ -1,6 +1,7 @@
 import type { Owner, TaskStatus } from "@/lib/tasks";
 import type { DashboardData, SeasonDay, Task } from "@/modules/types";
 import { demoBento } from "./bento";
+import { demoCheckin } from "./checkin";
 import { DEMO_TODAY, demoBody } from "./body";
 import { demoGallery } from "./gallery";
 
@@ -151,6 +152,7 @@ export const demoData: DashboardData = {
   settingsHref: "/demo/settings",
   ...demoBody,
   ...demoBento,
+  checkin: demoCheckin,
   goals: [
     { id: G.move, name: "Move to a 1RK", area: "Home", deadline: "2027-01-31", progress: "2 of 4 steps", pct: 50, by: "by 31 Jan 2027", tone: "accent", saving: false },
     { id: G.exams, name: "Clear 3rd-year exams", area: "Study", deadline: "2026-11-21", progress: "40%", pct: 40, by: "by 21 Nov", tone: "accent", saving: false },

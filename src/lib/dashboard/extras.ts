@@ -1,4 +1,5 @@
 import type { BodyCheck } from "@/lib/body";
+import { SECTIONS, sectionDone } from "@/lib/checkin-sections";
 import { dayKeyOf, phasesFor, type DayPlan } from "@/lib/day-plan";
 import { addDays, clockLabel, type Tracker } from "@/lib/trackers";
 import type { DashboardData, HeroDay, Point } from "@/modules/types";
@@ -75,23 +76,9 @@ export function buildPlan(plan: DayPlan | null, today: string, nowMinutes: numbe
   };
 }
 
-/**
- * Today's 5 things for the Overview, from today's check-in data (the mapping is in DESIGN.md §4):
- * Check-in = anything saved today; Workout = the "workout" tracker ticked or a session logged
- * today (walk days count the same tick); Meals = all meal slots have a value; Revision = the
- * "study" tracker above 0; Reading = the "reading-page" tracker logged today.
- */
-export function buildFocus(trackers: Tracker[], valueOn: ValueOn, today: string, checkedIn: boolean, workedOut: boolean): DashboardData["focus"] {
-  const bySlug = (slug: string) => trackers.find((t) => t.slug === slug);
-  const [workout, study, reading] = [bySlug("workout"), bySlug("study"), bySlug("reading-page")];
-  const meals = trackers.filter((t) => t.type === "choice" && t.group_name === "Meals");
-  return [
-    { label: "Check-in", done: checkedIn },
-    { label: "Workout", done: workedOut || (workout ? (valueOn(workout, today) ?? 0) >= 1 : false) },
-    { label: "Meals", done: meals.length > 0 && meals.every((t) => valueOn(t, today) !== undefined) },
-    { label: "Revision", done: study ? (valueOn(study, today) ?? 0) > 0 : false },
-    { label: "Reading", done: reading ? valueOn(reading, today) !== undefined : false },
-  ];
+/** Today's 5 things for the Overview: the check-in sections and their done rules (src/lib/checkin-sections.ts, DESIGN.md §4). */
+export function buildFocus(trackers: Tracker[], valueOn: ValueOn, today: string, workedOut: boolean): DashboardData["focus"] {
+  return SECTIONS.map((s) => ({ key: s.key, label: s.label, done: sectionDone(s.key, trackers, (t) => valueOn(t, today), workedOut) }));
 }
 
 /** "13:30–22:30" -> "1:30–10:30 PM" (one AM/PM when both match). */

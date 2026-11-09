@@ -1,4 +1,5 @@
-import { addDays, type Tracker } from "@/lib/trackers";
+import { SECTIONS, sectionTrackers } from "@/lib/checkin-sections";
+import { addDays, startingValue, type CheckInValues, type Tracker } from "@/lib/trackers";
 import type { DayPlan } from "@/lib/day-plan";
 import type { DashboardData, SeasonDay } from "@/modules/types";
 import type { BodyCheck, Workout } from "@/lib/body";
@@ -151,7 +152,8 @@ export function buildDashboardData({
     hero: buildHero(season, today, loggedDays, consistency),
     checkedIn: loggedDays.has(today),
     plan: buildPlan(dayPlan, today, nowMinutes),
-    focus: buildFocus(trackers, valueOn, today, loggedDays.has(today), workouts.some((w) => w.date === today)),
+    focus: buildFocus(trackers, valueOn, today, workouts.some((w) => w.date === today)),
+    checkin: buildCheckin(trackers, entries, today, workouts.some((w) => w.date === today)),
     sleep: series.sleep,
     meals: buildMeals(trackers, valueOn, today),
     bp: buildBp(trackers, valueOn, today),
@@ -209,3 +211,25 @@ function buildSeason(
     days,
   };
 }
+
+/**
+ * The Today card's section sheets: the 5 sections' trackers and the values each sheet starts on
+ * (today's if saved, else the latest in the history window, else the tracker's default).
+ */
+function buildCheckin(trackers: Tracker[], entries: EntryRow[], today: string, workedOut: boolean): DashboardData["checkin"] {
+  const own = SECTIONS.flatMap((s) => sectionTrackers(s.key, trackers));
+  const latest = new Map<string, { date: string; value: number }>();
+  for (const e of entries) {
+    const seen = latest.get(e.tracker_id);
+    if (!seen || e.entry_date > seen.date) latest.set(e.tracker_id, { date: e.entry_date, value: Number(e.value) });
+  }
+  const values: CheckInValues = {};
+  const saved: string[] = [];
+  for (const t of own) {
+    const last = latest.get(t.id);
+    if (last?.date === today) saved.push(t.id);
+    values[t.id] = last?.date === today ? last.value : startingValue(t, last?.value);
+  }
+  return { trackers: own, values, saved, workedOut };
+}
+
