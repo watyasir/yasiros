@@ -13,8 +13,8 @@ const CARD = ["bg-card", "bg-card/75", "bg-card/50"];
 
 /**
  * Money at a glance: what's left to spend this month (big, counts up once), the wallet of up to
- * 3 bank cards back to front ("All banks" while the snapshot has no banks; hover, focus or tap
- * fans them), and when it was updated.
+ * 3 bank cards back to front (hover, focus or tap fans them), and when it was updated. Until a bank
+ * has a balance, just one line (v10.2).
  */
 export function MoneyTile() {
   const { data } = useDashboard();
@@ -22,13 +22,15 @@ export function MoneyTile() {
   const href = viewHref(data.basePath, "finance");
   const [fanned, setFanned] = useState(false);
   const banks = money ? money.accounts.filter((a) => a.kind !== "card").slice(0, 3) : [];
-  const cards = banks.length ? banks.map((b) => ({ name: b.name, amount: b.balance })) : money ? [{ name: "All banks", amount: money.spendable }] : [];
+  const cards = banks.map((b) => ({ name: b.name, amount: b.balance }));
   const counted = useCountUp(money?.spendable ?? 0);
 
-  if (!money) {
+  // No bank with a balance yet (no opening balances in the finance sheet): one line, never a made-up
+  // or negative "left to spend".
+  if (!money || !banks.some((b) => b.balance !== 0)) {
     return (
-      <Tile title="Money" href={href} tone="money" area="money" tilt>
-        <EmptyNote>Shows once the finance task sends its first snapshot.</EmptyNote>
+      <Tile title="Money" href={href} tone="money" area="money">
+        <EmptyNote>Add balances to see money.</EmptyNote>
       </Tile>
     );
   }
