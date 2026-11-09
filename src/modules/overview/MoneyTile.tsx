@@ -25,9 +25,9 @@ export function MoneyTile() {
   const cards = banks.map((b) => ({ name: b.name, amount: b.balance }));
   const counted = useCountUp(money?.spendable ?? 0);
 
-  // No bank with a balance yet (no opening balances in the finance sheet): one line, never a made-up
-  // or negative "left to spend".
-  if (!money || !banks.some((b) => b.balance !== 0)) {
+  // No bank with a real balance yet: until the finance sheet has opening balances it sends one
+  // combined bank that's 0 or below zero. One line then, never a made-up or negative total.
+  if (!money || !banks.some((b) => b.balance > 0)) {
     return (
       <Tile title="Money" href={href} tone="money" area="money">
         <EmptyNote>Add balances to see money.</EmptyNote>
