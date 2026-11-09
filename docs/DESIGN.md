@@ -37,19 +37,19 @@ Type: `display` = Bricolage Grotesque 800 (headings, big numbers); Inter 500/600
 
 ## 4. Overview tiles
 
-- **Today** (dark hero, read-only; the whole tile opens `/log`): "3 of 5 done", a bar, a chip per item (✓ when done), "Left: Meals, Reading", "Next: <phase> at <time>" from the day plan. 5 of 5: one confetti burst a day per device. **The 5 items and their trackers:**
-  1. **Check-in**: anything saved today.
-  2. **Workout**: the `workout` tracker ticked today, or a workout session logged today (walk days use the same tick).
-  3. **Meals**: every meal slot (`choice` trackers in the Meals group) has a value today.
-  4. **Revision**: the `study` tracker above 0 minutes today.
-  5. **Reading**: the `reading-page` tracker logged today.
+- **Today** (dark hero; v10.2): "3 of 5 done", a bar, a chip per item (✓ when done), "Left: Meals, Reading", "Next: <phase> at <time>" from the day plan. The tile itself is not a link: each chip is a 44px button that opens a sheet with only that section (see §5); saving updates the chip, the count and the bar without a reload. 5 of 5: one confetti burst a day per device. **The 5 items and their trackers** (one source: `src/lib/checkin-sections.ts`):
+  1. **Sleep**: `lights-out` and `wake` both saved today. Sheet: lights out, woke up.
+  2. **Workout**: the `workout` tracker ticked today, or a workout session logged today (walk days use the same tick). Sheet: the "Workout done" tick + a "Log a workout" link.
+  3. **Meals**: every meal slot (`choice` trackers in the Meals group) has a value today. Sheet: the meal slots (Planned / Swapped / Skipped).
+  4. **Revision**: the `study` tracker above 0 minutes today. Sheet: the Study chips (None, 30m, 60m, 90m, 2h+).
+  5. **Reading**: the `reading-page` tracker logged today. Sheet: pages read.
 - **Next up:** 3 open tasks, overdue first, a round 44px tick. Tick → the task leaves the list at once (no strikethrough), small confetti, toast "Nice. N left." with Undo (puts it back). None left: "All clear." + Work link.
-- **Money:** left to spend (big, counts up once), the wallet of up to 3 bank cards back to front (hover, focus or tap fans them), "Updated 8:45 PM".
+- **Money:** left to spend (big, counts up once), the wallet of up to 3 bank cards back to front (hover, focus or tap fans them), "Updated 8:45 PM". Until a bank has a balance above zero the tile is one line: "Add balances to see money." (no fake or negative numbers).
 - **Winter Arc strip** (full width, short; opens Health): Day X / 90, streak flame, average consistency %, the 90 days as a thin row of dots (two rows on phones), today pulsing.
 
 ## 5. Interaction and motion
 
-Tilt (max 2.5°) + glare + 4px lift on mouse devices only; touch uses `:active` scale .96. Confetti ≤ 120 pieces on a canvas that removes itself. One toast at a time, bottom centre, 4.5 s, optional Undo; it's only for Undo and errors (no task pop-ups since v10). Tab changes fade and slide the page (React `<ViewTransition>`). No animation library. `prefers-reduced-motion` turns off tilt, confetti, count-ups and pulses. Every write is optimistic, rolls back with an error toast, and never double-saves.
+Tilt (max 2.5°) + glare + 4px lift on mouse devices only; touch uses `:active` scale .96. Confetti ≤ 120 pieces on a canvas that removes itself. One toast at a time, bottom centre, 4.5 s, optional Undo; it's only for Undo and errors (no task pop-ups since v10). Tab changes fade and slide the page (React `<ViewTransition>`). No animation library. `prefers-reduced-motion` turns off tilt, confetti, count-ups and pulses. Every write is optimistic, rolls back with an error toast, and never double-saves. **Section sheet** (v10.2, `SectionSheet`, the same component on the Today card and /log): bottom sheet on phones, centred panel from 640px, page colour, Cancel · title + date · Save (`pop`); only that section's rows; Save writes only those trackers and closes the sheet; Escape and the backdrop close it; focus moves in and back.
 
 ## 6. Accessibility
 
@@ -61,10 +61,11 @@ Plain, short, friendly. Empty states say what to do next; never fake numbers on 
 
 ## 8. Phone
 
-Installed as a home-screen app it should feel like one: no tap highlight, `touch-action: manipulation` on controls (pinch zoom kept), no text selection on nav, buttons and tile headings, no rubber-band scroll, safe-area insets with `viewport-fit=cover`, tile-shaped skeletons while a page loads (never a blank white screen), press feedback on every control. Sign-in inside the app: type the code from the sign-in email (or the code from Settings on a signed-in device). Designed at 390px first; no sideways scroll; the check-in stays under a minute.
+Installed as a home-screen app it should feel like one: no tap highlight, `touch-action: manipulation` on controls (pinch zoom kept), no text selection on nav, buttons and tile headings, no rubber-band scroll, safe-area insets with `viewport-fit=cover`, tile-shaped skeletons while a page loads (never a blank white screen), press feedback on every control. Sign-in inside the app: type the code from the sign-in email (or the code from Settings on a signed-in device). Designed at 390px first; no sideways scroll; the check-in stays under a minute (one section per tap since v10.2).
 
 ## 9. Changelog (Claude Code: apply the latest entry if the code doesn't match)
 
+- **v10.2 Section check-ins, 10 Nov 2026 (Yasir).** One tap, one section. Today chips are buttons (Sleep replaces Check-in) that open a sheet with only that section; the whole-tile link is gone. `/log` is a short list (Sleep, Workout, Meals, Revision, Reading with done marks, then More); each row opens the same sheet at `/log?section=<key>`. More holds every other tracker (weight, steps, blood pressure, skincare, hair, mood, Claude session) and the longer logs; nothing deleted. Overview Money is one line until a bank has a balance above zero. Same look, themes and motion. Outside components or sites used: none.
 - **Decko, 2 Nov 2026.** Display name "Decko" everywhere people see it (tab titles "<page> · Decko", manifest, home screen, login, offline, calendar feeds "Decko · <name>"); repo, address, routes and API URLs unchanged. New app icon "Bento": 4 tiles (dot-on yellow, check orange, money green, today blue) on the hero navy, full bleed; maskable version with the tiles in the centre 80%; SVG tab icon + favicon.ico; iPhone launch screens (Candy page colour, the icon at 22% of the width). The "Y" mark is gone.
 - **v10.1, 3 Nov 2026 (Yasir).** Phone (560px and under): the Decko mark and name sit top-left in the header (they filled an empty corner); laptop keeps the tabs there. The phone tab bar floats above the home indicator as a rounded card with a soft shadow; the active tab is a dark `hero` pill with a bold label and a bolder icon (22px), the others soft grey. Same tokens, all three themes.
 - **v10 Focus, 2 Nov 2026.** Same v9 look (tokens, tones, fonts, tilt, confetti, Undo toast, charts, wallet fan, count-up, flame, 3 themes); fewer, clearer pieces. 4 tabs (Overview, Health, Finance, Work) + Check-in + Settings; no name or mark in the header. Overview: greeting only; Today (5 things, read-only), Next up, Money, Winter Arc strip. Removed from Overview: water cups, score ring, Weight, 1RK fund, Meals, TYBBA and Claude's jobs tiles. No due-task pop-ups or reminder toasts. Health gets the Winter Arc hero, Meals and the "Body check due" chip; Steps, Today's trackers and Body check tiles removed. Finance adds "Saving for". Work replaces the kanban with goal cards (tasks.goal_id). Gallery, the share card and Claude's jobs moved to Settings. App feel for the installed iPhone app, skeleton loading, page transitions, and sign-in with the email code.

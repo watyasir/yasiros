@@ -19,11 +19,12 @@
 | v10 | Focus: 4 tabs, Work goal cards, app feel | ✅ Done (1–2 Nov 2026) |
 | — | Rebrand to Decko, Bento icon | ✅ Done (2 Nov 2026) |
 | — | Security + reliability pass | ✅ Done (2 Nov 2026) |
+| v10.2 | Section check-ins | ✅ Done (10 Nov 2026) |
 
-## ▶ Start here (current state, 2 Nov 2026)
+## ▶ Start here (current state, 10 Nov 2026)
 Read this block first; the sections below it are history, oldest first.
 
-**What's live** (yasiros.vercel.app, display name "Decko"): v10 Focus on the v9 Playground look. 4 tabs: Overview `/` (Today's 5 things, Next up, Money, Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards); Check-in `/log`; Settings (themes, season, trackers, calendar feeds, sign-in code, Gallery, share card, Claude's jobs). Every page again under `/demo` on fake data. `/money`, `/board`, `/winter-arc` redirect. No task pop-ups.
+**What's live** (yasiros.vercel.app, display name "Decko"): v10 Focus on the v9 Playground look. 4 tabs: Overview `/` (Today's 5 things as buttons that each open one check-in section, Next up, Money (one line until a bank has a balance), Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards); Check-in `/log` (a list of 5 sections + More, each opens the same sheet at `/log?section=<key>`); Settings (themes, season, trackers, calendar feeds, sign-in code, Gallery, share card, Claude's jobs). Every page again under `/demo` on fake data. `/money`, `/board`, `/winter-arc` redirect. No task pop-ups.
 
 **Database:** every file in `supabase/migrations/` (up to `20261102000001_task_goals.sql`) has been run on the live Supabase project. A new migration must be additive, and the app must keep working before it's run (catch Postgres `42703`, as `src/lib/task-store.ts` and `src/lib/tracker-store.ts` do).
 
@@ -45,6 +46,7 @@ Read this block first; the sections below it are history, oldest first.
 | App shell, tabs, Check-in + Settings buttons | `src/components/dashboard/` (`Dashboard.tsx`, `Nav.tsx`, `DashboardContext.tsx`) |
 | One folder per page | `src/modules/overview`, `health`, `finance`, `work`, `gallery`; shared types in `src/modules/types.ts` |
 | Shared pieces | `src/components/` (`Tile`, `LineChart`, `Toast`, `Skeleton`, `useConfetti`, …) |
+| Check-in sections (which trackers, when done), the sheet, /log list | `src/lib/checkin-sections.ts`, `src/components/checkin/` (`SectionSheet`, `useSectionSave`, `CheckInHub`, `TrackerRows`) |
 | Turning database rows into what pages show | `src/lib/dashboard/` (`load.ts` reads, `build.ts` + `extras.ts` shape; Today's 5 things in `buildFocus`) |
 | Themes and all colours | `src/app/globals.css` (`--th-*` per theme); contrast check `scripts/contrast.mjs` |
 | Fake data for /demo | `src/data/demo/` |
@@ -405,3 +407,10 @@ Cloud session (2 Nov): old unticked items closed or moved here; build, lint, tsc
 - → Uptime monitor on /api/health: tracked in "Start here" at the top
 - → First `npm run backup` on the Mac: tracked in "Start here" at the top
 
+
+## v10.2 Section check-ins (10 Nov 2026)
+- [x] Today card: 5 chips are 44px buttons (Sleep, Workout, Meals, Revision, Reading); each opens a sheet with only that section; saves only its trackers, optimistic with rollback; count and bar update without a reload. Whole-tile link removed.
+- [x] /log: list of the 5 sections with done marks + More (all other trackers and the longer logs); rows open the same sheet at `/log?section=<key>`.
+- [x] Overview Money: one line "Add balances to see money." until a bank has a balance above zero.
+- [x] Tested live signed in at 1440 and 390, all 3 themes; each section saved only its own trackers; test entries removed afterwards (today back to empty).
+- Next: opening balances (HDFC, HSBC, IDFC) so Money shows the wallet again.

@@ -418,3 +418,20 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** the phone Work page with the floating tab bar.
 **Next:** re-add the iPhone home-screen app.
 
+
+## Session 26 — 10 Nov 2026 — v10.2: Section check-ins
+**Goal:** Stop skipping the long check-in: tap one thing, fill only that, done.
+**What I asked Claude Code to do:** "Today's 5 chips open just their section; /log becomes a short list of sections plus More; hide Money until there are balances. Same look, no redesign."
+**What got built:**
+- One sheet component used in two places: each Today chip (Sleep, Workout, Meals, Revision, Reading) opens it with only that section's rows; /log lists the same 5 with done marks plus "More" for everything else, each at its own address (`/log?section=meals`).
+- Saving writes only that section's trackers, shows at once, and puts things back with an error message if the save fails. The card's "N of 5 done" and bar update without a reload.
+- One file decides which trackers belong to which section and when it counts as done, so the card, /log and the counts can't disagree.
+- Money on the Overview is a single line until a bank has a real balance.
+**What broke and how we fixed it:**
+- Tapping a /log row changed the address but didn't open the sheet; the rows now open the sheet straight away and update the address after.
+- Opening a section on /log froze the page ("too many re-renders"): the list rebuilt its data object on every render and the save helper treated each one as new data. It now compares the parts.
+- Money still showed numbers live, because the finance task sends one combined bank with a negative total; the rule became "a bank above zero".
+- Outside components or sites used: none.
+**What Yasir had to do himself:** Nothing.
+**Screenshot to take:** Phone Overview with the Meals sheet open over the Today card.
+**Next:** add opening balances so the Money wallet comes back.
