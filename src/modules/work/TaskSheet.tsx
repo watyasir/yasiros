@@ -11,7 +11,8 @@ const fieldClass = "min-h-11 w-full rounded-xl border border-line bg-card px-3 t
 const labelClass = "flex flex-col gap-1 text-xs font-semibold text-soft";
 
 /**
- * One sheet for adding and editing: title, note, area, due date, who's on it, goal, status.
+ * One sheet for adding and editing: title, note, area, start and due dates, who's on it, goal, status.
+ * A start date after today puts the task on hold (small and grey on Work) until that day.
  * A bottom sheet on the phone, a centred panel on the laptop. Esc or Cancel closes it.
  */
 export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: () => void }) {
@@ -25,6 +26,7 @@ export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: (
     owner: task?.owner ?? "Me",
     status: target.status,
     goalId: task?.goalId ?? target.goalId ?? null,
+    start: task?.start ?? null,
   });
   const [problem, setProblem] = useState<string | null>(null);
   const ref = useRef<HTMLDialogElement>(null);
@@ -68,10 +70,14 @@ export function TaskSheet({ target, onClose }: { target: SheetTarget; onClose: (
             className={`${fieldClass} resize-none py-2.5 leading-[1.4]`}
           />
         </label>
+        <label className={labelClass}>
+          Area
+          <input value={form.area} onChange={(e) => set("area", e.target.value)} maxLength={40} placeholder="Home, Health…" className={fieldClass} />
+        </label>
         <div className="flex gap-2">
           <label className={`${labelClass} min-w-0 flex-1`}>
-            Area
-            <input value={form.area} onChange={(e) => set("area", e.target.value)} maxLength={40} placeholder="Home, Health…" className={fieldClass} />
+            Starts on (optional)
+            <input type="date" value={form.start ?? ""} onChange={(e) => set("start", e.target.value || null)} className={fieldClass} />
           </label>
           <label className={`${labelClass} min-w-0 flex-1`}>
             Due

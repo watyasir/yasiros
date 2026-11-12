@@ -15,20 +15,25 @@ type TaskRow = {
   sort_order: number;
   done_at: string | null;
   goal_id?: string | null;
+  start_date?: string | null;
 };
 
 const BASE_COLUMNS = "id, title, area, due_date, status, owner, done_at, note, sort_order";
-/** goal_id comes from migration 20261102000001_task_goals.sql. */
-const TASK_COLUMNS = `${BASE_COLUMNS}, goal_id`;
+/**
+ * Newest first: start_date (migration 20261113000001_task_start_date.sql), then goal_id
+ * (20261102000001_task_goals.sql). Each is dropped while its migration hasn't run (Postgres 42703).
+ */
+const COLUMN_TRIES = [`${BASE_COLUMNS}, goal_id, start_date`, `${BASE_COLUMNS}, goal_id`, BASE_COLUMNS];
 
 /**
- * Every task. Before the task-goals migration runs, goal_id doesn't exist (Postgres 42703):
- * read without it, so every task shows as loose on the Work page. Null = database error.
+ * Every task. Before a migration runs, its column doesn't exist: read without it (no goal =
+ * every task loose; no start date = nothing on hold). Null = database error.
  */
 export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
   const select = (columns: string) => supabase.from("tasks").select(columns).order("created_at").returns<TaskRow[]>();
-  let { data, error } = await select(TASK_COLUMNS);
-  if (error?.code === "42703") ({ data, error } = await select(BASE_COLUMNS));
+  let res = await select(COLUMN_TRIES[0]);
+  for (const columns of COLUMN_TRIES.slice(1)) if (res.error?.code === "42703") res = await select(columns);
+  const { data, error } = res;
   if (error || !data) return null;
   return data.map((t) => ({
     id: t.id,
@@ -41,6 +46,7 @@ export async function loadTasks(supabase: Supabase): Promise<Task[] | null> {
     order: t.sort_order,
     doneAt: t.done_at,
     goalId: t.goal_id ?? null,
+    start: t.start_date ?? null,
   }));
 }
 
@@ -49,7 +55,7 @@ export async function loadGoals(supabase: Supabase): Promise<{ goals: Goal[]; tr
   const [goals, progress] = await Promise.all([
     supabase
       .from("goals")
-      .select("id, title, area, target, unit, deadline, tracker_id, current")
+      .select("id, title, area, target, unit, deadline, start_date, tracker_id, current")
       .order("deadline", { ascending: true, nullsFirst: false })
       .order("created_at"),
     supabase.from("goal_progress").select("goal_id, tracked"),
@@ -63,6 +69,7 @@ export async function loadGoals(supabase: Supabase): Promise<{ goals: Goal[]; tr
       target: Number(g.target),
       unit: g.unit,
       deadline: g.deadline,
+      start: g.start_date,
       trackerId: g.tracker_id,
       current: Number(g.current),
     })),

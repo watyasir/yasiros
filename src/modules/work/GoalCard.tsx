@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { Chip } from "@/components/Chip";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Tile, type TileTone } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import type { Task } from "@/lib/tasks";
+import { shortDate } from "@/lib/trackers";
 import { DueChip } from "./DueChip";
 import { useTick } from "./useTick";
 
@@ -18,6 +20,10 @@ export interface CardModel {
   /** null = the Loose tasks card. */
   goalId: string | null;
   tasks: Task[];
+  /** Open tasks that haven't started (their own start date, or the goal's), with that date. */
+  held: { task: Task; start: string }[];
+  /** The goal's start date while it's on hold, else null. */
+  start: string | null;
   /** % done: done tasks of all, or the goal's own progress while it has no tasks. */
   pct: number;
   tone: TileTone;
@@ -26,18 +32,38 @@ export interface CardModel {
 /**
  * One goal on the Work page: area and deadline, the name, % done with a bar, "x of y tasks done",
  * and the first 3 open tasks ("Show all N" for more). Tick = the task leaves the list (Done),
- * confetti and an Undo toast. Tap a title to edit it in the task sheet.
+ * confetti and an Undo toast. Tap a title to edit it in the task sheet. On-hold tasks sit at the
+ * bottom as small grey rows with a "Starts" chip (no tick). An on-hold goal is a small grey card
+ * (title and "Starts" chip) until its start date; tapping it opens the full card.
  */
 export function GoalCard({ card, onOpen, onAdd }: { card: CardModel; onOpen: (t: Task) => void; onAdd: (goalId: string | null) => void }) {
   const { data } = useDashboard();
   const tick = useTick();
   const [all, setAll] = useState(false);
-  const open = card.tasks.filter((t) => t.status !== "done").sort(byDue);
-  const done = card.tasks.length - open.length;
+  const [opened, setOpened] = useState(false);
+  const heldIds = new Set(card.held.map((h) => h.task.id));
+  const open = card.tasks.filter((t) => t.status !== "done" && !heldIds.has(t.id)).sort(byDue);
+  const done = card.tasks.filter((t) => t.status === "done").length;
   const shown = all ? open : open.slice(0, SHOWN);
 
+  if (card.start && !opened) {
+    return (
+      <Tile title={card.meta} tone={card.tone} className="self-start opacity-55 grayscale">
+        <button
+          type="button"
+          onClick={() => setOpened(true)}
+          aria-label={`${card.name}, on hold, starts ${shortDate(card.start)}. Open`}
+          className="press -m-1 flex min-h-11 cursor-pointer items-center gap-2 rounded-item border-0 bg-transparent p-1 text-left text-ink"
+        >
+          <span className="display min-w-0 flex-1 text-lg leading-tight">{card.name}</span>
+          <Chip>Starts {shortDate(card.start)}</Chip>
+        </button>
+      </Tile>
+    );
+  }
+
   return (
-    <Tile title={card.meta} tone={card.tone} className="h-full">
+    <Tile title={card.meta} tone={card.tone} className="h-full" aside={card.start && <Chip>Starts {shortDate(card.start)}</Chip>}>
       <div className="flex flex-col gap-2">
         <h3 className="display m-0 text-2xl leading-tight">{card.name}</h3>
         <div className="flex items-center gap-3">
@@ -50,7 +76,7 @@ export function GoalCard({ card, onOpen, onAdd }: { card: CardModel; onOpen: (t:
           {card.tasks.length ? `${done} of ${card.tasks.length} tasks done` : "No tasks yet"}
         </span>
       </div>
-      {open.length === 0 && card.tasks.length > 0 && <p className="m-0 text-sm font-semibold">All done ✓</p>}
+      {open.length === 0 && card.held.length === 0 && card.tasks.length > 0 && <p className="m-0 text-sm font-semibold">All done ✓</p>}
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
         {shown.map((t) => (
           <li key={t.id} className="flex items-center gap-1 rounded-item bg-card/70 pr-2">
@@ -71,6 +97,19 @@ export function GoalCard({ card, onOpen, onAdd }: { card: CardModel; onOpen: (t:
             >
               <span className="min-w-0 flex-1 truncate">{t.title}</span>
               <DueChip task={t} today={data.todayISO} />
+            </button>
+          </li>
+        ))}
+        {card.held.map(({ task: t, start }) => (
+          <li key={t.id}>
+            <button
+              type="button"
+              onClick={() => onOpen(t)}
+              aria-label={`${t.title}, on hold, starts ${shortDate(start)}. Edit`}
+              className="press flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-item border-0 bg-card/40 py-0 pl-3 pr-2 text-left text-xs font-semibold text-soft"
+            >
+              <span className="min-w-0 flex-1 truncate">{t.title}</span>
+              <Chip>Starts {shortDate(start)}</Chip>
             </button>
           </li>
         ))}

@@ -35,7 +35,7 @@ export function DemoGoalsForm() {
           await wait();
           setGoals((all) => [
             ...all,
-            { id: `g${Date.now()}`, title: g.title.trim(), area: g.area, target: g.target ?? 1, unit: g.unit || null, deadline: g.deadline, trackerId: g.trackerId, current: 0 },
+            { id: `g${Date.now()}`, title: g.title.trim(), area: g.area, target: g.target ?? 1, unit: g.unit || null, deadline: g.deadline, start: null, trackerId: g.trackerId, current: 0 },
           ]);
           return { ok: true };
         },

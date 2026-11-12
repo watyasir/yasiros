@@ -6,7 +6,7 @@ import { Segmented } from "@/components/Segmented";
 import { Tile, type TileTone } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { shortDate } from "@/lib/trackers";
-import type { Task } from "@/lib/tasks";
+import { heldTasks, notStarted, type Task } from "@/lib/tasks";
 import { GoalCard, type CardModel } from "./GoalCard";
 import { TaskSheet, type SheetTarget } from "./TaskSheet";
 
@@ -17,13 +17,20 @@ type Filter = "active" | "done" | "all";
  * Work (v10, replaces the Board): one card per goal with its tasks, 3 columns on a laptop, 2 from
  * 1100px, 1 from 700px, cards in a row the same height. Tasks with no goal (or before the
  * task-goals migration, every task) go in a last "Loose tasks" card. Active / Done / All filter.
+ * On-hold goals (start date still ahead, in India) sit after the rest as small grey cards.
  */
 export function WorkView() {
   const { data, tasks, taskError } = useDashboard();
   const [filter, setFilter] = useState<Filter>("active");
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
 
+  const today = data.todayISO;
   const goalIds = new Set(data.goals.map((g) => g.id));
+  const held = heldTasks(tasks, data.goals, today);
+  // An on-hold task's chip shows its own start date, or else its goal's.
+  const goalStart = new Map(data.goals.map((g) => [g.id, g.start]));
+  const startOf = (t: Task) => (notStarted(t.start, today) ? t.start! : goalStart.get(t.goalId ?? "")!);
+  const split = (list: Task[]) => ({ tasks: list, held: list.filter((t) => held.has(t.id) && t.status !== "done").map((t) => ({ task: t, start: startOf(t) })) });
   const cards: CardModel[] = data.goals.map((g, i) => {
     const own = tasks.filter((t) => t.goalId === g.id);
     return {
@@ -31,13 +38,16 @@ export function WorkView() {
       meta: `${g.area || "Goal"} · ${g.deadline ? `by ${shortDate(g.deadline)}` : "no deadline"}`,
       name: g.name,
       goalId: g.id,
-      tasks: own,
+      ...split(own),
+      start: notStarted(g.start, today) ? g.start : null,
       pct: own.length ? pctDone(own) : g.pct,
       tone: TONES[i % TONES.length],
     };
   });
   const loose = tasks.filter((t) => !t.goalId || !goalIds.has(t.goalId));
-  if (loose.length) cards.push({ key: "loose", meta: "No goal", name: "Loose tasks", goalId: null, tasks: loose, pct: pctDone(loose), tone: "card" });
+  if (loose.length) cards.push({ key: "loose", meta: "No goal", name: "Loose tasks", goalId: null, ...split(loose), start: null, pct: pctDone(loose), tone: "card" });
+  // On-hold goals go after the active ones (stable: each group keeps its deadline order).
+  cards.sort((a, b) => Number(!!a.start) - Number(!!b.start));
 
   const finished = (c: CardModel) => (c.tasks.length ? c.tasks.every((t) => t.status === "done") : c.pct >= 100);
   const shown = cards.filter((c) => filter === "all" || (filter === "done" ? finished(c) : !finished(c)));

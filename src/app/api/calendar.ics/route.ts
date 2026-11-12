@@ -3,12 +3,15 @@ import { compact, description, escape, event, fold, routineEvents } from "@/lib/
 import { parseDayPlan } from "@/lib/day-plan";
 import { ownerClient } from "@/lib/owner";
 import { isShareToken } from "@/lib/share-store";
+import { heldTasks } from "@/lib/tasks";
 import { addDays, todayISO } from "@/lib/trackers";
+
+type TaskRow = { id: string; title: string; status: string; due_date: string; note: string | null; next_steps: string | null; start_date?: string | null; goal_id?: string | null };
 
 /*
   /api/calendar.ics?token=<SHARE_TOKEN>: a calendar feed for Apple Calendar (subscribe with
   webcal://). The day plan's phases repeat weekly on their days; tasks with a due date are
-  all-day events. Read-only; the calendar app fetches it again about every hour.
+  all-day events (on-hold ones only once they start). Read-only; the calendar app fetches it again about every hour.
   &cat=<key> gives one coloured feed per category (src/lib/calendar.ts); without it, everything
   comes in the one "Decko" feed as before.
 */
@@ -25,16 +28,25 @@ export async function GET(request: Request) {
   if (!owner) return new Response("Calendar isn't set up", { status: 503 });
   const { supabase, ownerId } = owner;
 
-  const [plan, tasks] = await Promise.all([
+  // start_date and goal_id come from later migrations: read without them until they've run (42703).
+  const readTasks = (extra: string) =>
+    supabase.from("tasks").select(`id, title, status, due_date, note, next_steps${extra}`).eq("user_id", ownerId).not("due_date", "is", null).returns<TaskRow[]>();
+  const [plan, firstTasks, goals] = await Promise.all([
     supabase.from("day_plans").select("plan").eq("user_id", ownerId).maybeSingle(),
-    supabase.from("tasks").select("id, title, status, due_date, note, next_steps").eq("user_id", ownerId).not("due_date", "is", null),
+    readTasks(", start_date, goal_id"),
+    supabase.from("goals").select("id, start_date").eq("user_id", ownerId),
   ]);
-  if (plan.error || tasks.error) {
-    console.error(`GET /api/calendar.ics failed: ${(plan.error ?? tasks.error)!.message}`);
+  let tasks = firstTasks;
+  for (const extra of [", goal_id", ""]) if (tasks.error?.code === "42703") tasks = await readTasks(extra);
+  if (plan.error || tasks.error || goals.error) {
+    console.error(`GET /api/calendar.ics failed: ${(plan.error ?? tasks.error ?? goals.error)!.message}`);
     return new Response("Couldn't read the calendar. Try again.", { status: 500 });
   }
 
   const today = todayISO();
+  // On-hold tasks (their own start date, or their goal's, still ahead) join the feed on that day.
+  const shown = tasks.data!.map((t) => ({ ...t, start: t.start_date ?? null, goalId: t.goal_id ?? null }));
+  const held = heldTasks(shown, goals.data.map((g) => ({ id: g.id, start: g.start_date })), today);
   const parsed = plan.data ? parseDayPlan(plan.data.plan) : null;
   const lines = [
     "BEGIN:VCALENDAR",
@@ -57,8 +69,8 @@ export async function GET(request: Request) {
     "END:STANDARD",
     "END:VTIMEZONE",
     ...(parsed?.ok && cat?.key !== "tasks" ? routineEvents(parsed.plan, today, cat?.key) : []),
-    ...(cat && cat.key !== "tasks" ? [] : tasks.data).map((t) => {
-      const due = t.due_date as string;
+    ...(cat && cat.key !== "tasks" ? [] : shown.filter((t) => !held.has(t.id))).map((t) => {
+      const due = t.due_date;
       return event([
         `UID:task-${t.id}@yasiros`,
         `DTSTART;VALUE=DATE:${compact(due)}`,

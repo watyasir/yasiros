@@ -10,12 +10,14 @@ const toApi = (rows: TaskRow[]) => rows.map((t) => ({ ...t, owner: apiOwner(t.ow
 
 /**
  * The columns to read and write: with goal_id once migration 20261102000001_task_goals.sql has
- * run (Postgres says 42703 "column does not exist" before that).
+ * run, and start_date once 20261113000001_task_start_date.sql has (Postgres says 42703 "column
+ * does not exist" before that).
  */
-async function columnsFor(supabase: Supabase): Promise<{ columns: string; hasGoal: boolean }> {
-  const { error } = await supabase.from("tasks").select("goal_id").limit(1);
-  const hasGoal = error?.code !== "42703";
-  return { columns: hasGoal ? `${TASK_API_COLUMNS}, goal_id` : TASK_API_COLUMNS, hasGoal };
+async function columnsFor(supabase: Supabase): Promise<{ columns: string; hasGoal: boolean; hasStart: boolean }> {
+  const has = async (column: string) => (await supabase.from("tasks").select(column).limit(1)).error?.code !== "42703";
+  const [hasGoal, hasStart] = await Promise.all([has("goal_id"), has("start_date")]);
+  const columns = [TASK_API_COLUMNS, hasGoal && "goal_id", hasStart && "start_date"].filter(Boolean).join(", ");
+  return { columns, hasGoal, hasStart };
 }
 
 /** Lists the Board's tasks, most important first. ?status=todo,doing filters by column. */
@@ -51,7 +53,9 @@ export async function POST(request: Request) {
     return apiError(400, parsed.error);
   }
 
-  const { columns, hasGoal } = await columnsFor(supabase);
+  const { columns, hasGoal, hasStart } = await columnsFor(supabase);
+  // Before the start-date migration, start_date is dropped and the rest is saved.
+  if (!hasStart) for (const t of parsed.tasks) delete t.start_date;
   const goalIds = [...new Set(parsed.tasks.map((t) => t.goal_id).filter((g): g is string => typeof g === "string"))];
   if (parsed.tasks.some((t) => t.goal_id !== undefined) && !hasGoal) {
     return apiError(400, "goal_id: the task-goals migration (20261102000001_task_goals.sql) hasn't been run yet.");

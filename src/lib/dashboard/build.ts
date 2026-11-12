@@ -3,7 +3,7 @@ import { addDays, startingValue, type CheckInValues, type Tracker } from "@/lib/
 import type { DayPlan } from "@/lib/day-plan";
 import type { DashboardData, SeasonDay } from "@/modules/types";
 import type { BodyCheck, Workout } from "@/lib/body";
-import { dueState, type Goal, type Task } from "@/lib/tasks";
+import { dueState, heldTasks, type Goal, type Task } from "@/lib/tasks";
 import { toMoneyTile, type MoneySnapshot } from "@/lib/money";
 import { buildBody } from "./body";
 import { buildGoals } from "./goals";
@@ -121,7 +121,9 @@ export function buildDashboardData({
     weekTarget: workoutTracker?.target_period === "weekly" && workoutTracker.target != null ? Number(workoutTracker.target) : null,
   });
 
-  const open = tasks.filter((t) => t.status !== "done");
+  // On-hold tasks (not started yet, or on a goal that hasn't) stay out of the counts.
+  const held = heldTasks(tasks, goals, today);
+  const open = tasks.filter((t) => t.status !== "done" && !held.has(t.id));
   const overdue = open.filter((t) => dueState(t, today) === "overdue").length;
   const dueToday = open.filter((t) => t.due === today).length;
 

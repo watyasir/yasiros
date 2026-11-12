@@ -7,24 +7,26 @@ import { fileNameFor, type GalleryItem, type GalleryMime } from "@/lib/gallery";
 import { TASK_STATUSES, taskProblem, type NewTask, type TaskStatus } from "@/lib/tasks";
 
 /** The columns the task sheet saves. Changes from the app are marked as Yasir's. */
-const taskRow = (task: NewTask, withGoal: boolean) => ({
+const taskRow = (task: NewTask, newer: number) => ({
   title: task.title.trim(),
   area: task.area.trim(),
   due_date: task.due || null,
   status: task.status,
   note: task.note.trim() || null,
   owner: task.owner,
-  ...(withGoal ? { goal_id: task.goalId } : {}),
+  ...(newer >= 1 ? { goal_id: task.goalId } : {}),
+  ...(newer >= 2 ? { start_date: task.start || null } : {}),
   updated_by: "Yasir",
 });
 
 /**
- * Runs a save with goal_id, and again without it if the task-goals migration hasn't run yet
- * (Postgres 42703 "column does not exist"), so the sheet works either way.
+ * Runs a save with goal_id and start_date (newer = 2), then without start_date (1), then
+ * without goal_id too (0), while those migrations haven't run (Postgres 42703 "column does not
+ * exist"), so the sheet works either way.
  */
-async function withGoalFallback(save: (withGoal: boolean) => PromiseLike<{ error: { code?: string } | null }>): Promise<{ ok: boolean }> {
-  let { error } = await save(true);
-  if (error?.code === "42703" || error?.code === "PGRST204") ({ error } = await save(false));
+async function withColumnFallback(save: (newer: number) => PromiseLike<{ error: { code?: string } | null }>): Promise<{ ok: boolean }> {
+  let { error } = await save(2);
+  for (const newer of [1, 0]) if (error?.code === "42703" || error?.code === "PGRST204") ({ error } = await save(newer));
   if (error) return { ok: false };
   refresh();
   return { ok: true };
@@ -49,14 +51,14 @@ export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
       task = { ...task, goalId };
     }
   }
-  return withGoalFallback((g) => supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task, g) }));
+  return withColumnFallback((g) => supabase.from("tasks").insert({ user_id: user.id, ...taskRow(task, g) }));
 }
 
 /** Saves the task sheet. Row-level security limits this to the user's own tasks. */
 export async function updateTask(id: string, task: NewTask): Promise<{ ok: boolean }> {
   if (taskProblem(task)) return { ok: false };
   const { supabase } = await requireUser();
-  return withGoalFallback((g) => supabase.from("tasks").update(taskRow(task, g)).eq("id", id));
+  return withColumnFallback((g) => supabase.from("tasks").update(taskRow(task, g)).eq("id", id));
 }
 
 /** Changes a task's status (ticking one off moves it to Done; Undo puts it back). */

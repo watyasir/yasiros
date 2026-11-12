@@ -25,13 +25,13 @@ function demoTask(
   area: string,
   due: string | null,
   status: TaskStatus,
-  extra: Partial<Pick<Task, "note" | "order" | "doneAt" | "goalId">> = {},
+  extra: Partial<Pick<Task, "note" | "order" | "doneAt" | "goalId" | "start">> = {},
 ): Task {
-  return { id, title, owner, area, due, status, note: null, order: 0, doneAt: null, goalId: null, ...extra };
+  return { id, title, owner, area, due, status, note: null, order: 0, doneAt: null, goalId: null, start: null, ...extra };
 }
 
 // Made-up goals the demo tasks belong to (the Work page's cards).
-const G = { move: "demo-goal-move", exams: "demo-goal-exams", os: "demo-goal-os", fund: "demo-goal-fund" };
+const G = { move: "demo-goal-move", exams: "demo-goal-exams", os: "demo-goal-os", fund: "demo-goal-fund", drive: "demo-goal-drive" };
 
 export const demoData: DashboardData = {
   theme: "candy",
@@ -154,16 +154,19 @@ export const demoData: DashboardData = {
   ...demoBento,
   checkin: demoCheckin,
   goals: [
-    { id: G.move, name: "Move to a 1RK", area: "Home", deadline: "2027-01-31", progress: "2 of 4 steps", pct: 50, by: "by 31 Jan 2027", tone: "accent", saving: false },
-    { id: G.exams, name: "Clear 3rd-year exams", area: "Study", deadline: "2026-11-21", progress: "40%", pct: 40, by: "by 21 Nov", tone: "accent", saving: false },
-    { id: G.os, name: "Finish Decko", area: "Build", deadline: "2026-11-15", progress: "75%", pct: 75, by: "by 15 Nov", tone: "accent", saving: false },
-    { id: G.fund, name: "1RK fund", area: "Money", deadline: "2027-01-31", progress: "₹42,000 of ₹1,00,000", pct: 42, by: "by 31 Jan 2027", tone: "accent", saving: true },
-    { id: "demo-goal-travel", name: "Travel fund", area: "Money", deadline: "2027-04-30", progress: "₹26,000 of ₹50,000", pct: 52, by: "by 30 Apr 2027", tone: "accent", saving: true },
+    { id: G.move, name: "Move to a 1RK", area: "Home", deadline: "2027-01-31", start: null, progress: "2 of 4 steps", pct: 50, by: "by 31 Jan 2027", tone: "accent", saving: false },
+    { id: G.exams, name: "Clear 3rd-year exams", area: "Study", deadline: "2026-11-21", start: null, progress: "40%", pct: 40, by: "by 21 Nov", tone: "accent", saving: false },
+    { id: G.os, name: "Finish Decko", area: "Build", deadline: "2026-11-15", start: null, progress: "75%", pct: 75, by: "by 15 Nov", tone: "accent", saving: false },
+    { id: G.fund, name: "1RK fund", area: "Money", deadline: "2027-01-31", start: null, progress: "₹42,000 of ₹1,00,000", pct: 42, by: "by 31 Jan 2027", tone: "accent", saving: true },
+    // On hold: starts in January, so the Work page shows it small and grey until then.
+    { id: G.drive, name: "Learn to drive", area: "Skills", deadline: "2027-04-30", start: "2027-01-25", progress: "0%", pct: 0, by: "by 30 Apr 2027", tone: "accent", saving: false },
+    { id: "demo-goal-travel", name: "Travel fund", area: "Money", deadline: "2027-04-30", start: null, progress: "₹26,000 of ₹50,000", pct: 52, by: "by 30 Apr 2027", tone: "accent", saving: true },
   ],
   tasks: [
     demoTask("t0", "Book the movers", "Both", "Home", "2026-10-20", "todo", { order: 10, goalId: G.move }),
     demoTask("t1", "Shortlist 3 flats near the office", "Me", "Home", "2026-10-25", "todo", { goalId: G.move }),
     demoTask("t2", "Pack the kitchen", "Me", "Home", null, "todo", { goalId: G.move }),
+    demoTask("t16", "Set up the flat's Wi-Fi", "Me", "Home", null, "todo", { goalId: G.move, start: "2026-11-01" }),
     demoTask("t3", "Pay the token amount", "Me", "Home", null, "done", { goalId: G.move, doneAt: "2026-10-14T10:00:00+05:30" }),
     demoTask("t4", "Revise Marketing unit 3", "Me", "Study", "2026-10-18", "todo", { goalId: G.exams }),
     demoTask("t5", "Finance past papers (2 years)", "Me", "Study", "2026-10-16", "todo", { goalId: G.exams }),
@@ -174,6 +177,7 @@ export const demoData: DashboardData = {
     demoTask("t10", "Write the case study", "Both", "Build", null, "todo", { goalId: G.os }),
     demoTask("t11", "Soft bento redesign", "Claude", "Build", null, "done", { goalId: G.os, doneAt: "2026-10-16T10:00:00+05:30" }),
     demoTask("t12", "Three themes", "Claude", "Build", null, "done", { goalId: G.os, doneAt: "2026-10-17T10:00:00+05:30" }),
+    demoTask("t17", "Book driving lessons", "Me", "Skills", null, "todo", { goalId: G.drive }),
     demoTask("t13", "Two delivery refund disputes", "Claude", "Disputes", "2026-10-15", "waiting", { note: "Waiting 48 h before the second follow-up" }),
     demoTask("t14", "Renew library card", "Me", "Errands", "2026-10-18", "todo"),
     demoTask("t15", "Cancel unused music app", "Claude", "Subscriptions", null, "todo"),

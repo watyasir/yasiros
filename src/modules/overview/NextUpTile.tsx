@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Tile } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { viewHref } from "@/components/dashboard/Nav";
-import type { Task } from "@/lib/tasks";
+import { heldTasks, type Task } from "@/lib/tasks";
 import { DueChip } from "@/modules/work/DueChip";
 import { OwnerChip } from "@/modules/work/OwnerChip";
 import { useTick } from "@/modules/work/useTick";
@@ -13,7 +13,7 @@ import { useTick } from "@/modules/work/useTick";
 const SLIDE_MS = 280;
 
 /**
- * The next 3 open tasks: overdue first, then by due date, then importance. The round button ticks
+ * The next 3 open tasks that have started: overdue first, then by due date, then importance. The round button ticks
  * one off (moved to Done): the row slides out of the list at once (no strikethrough), a small
  * confetti burst, and a toast with Undo (which reopens it where it was).
  */
@@ -22,7 +22,9 @@ export function NextUpTile() {
   const tickTask = useTick();
   const [leaving, setLeaving] = useState<string[]>([]);
   const today = data.todayISO;
-  const open = tasks.filter((t) => t.status !== "done");
+  // On-hold tasks (start date still ahead, or their goal's) wait on the Work page.
+  const held = heldTasks(tasks, data.goals, today);
+  const open = tasks.filter((t) => t.status !== "done" && !held.has(t.id));
   const next = [...open]
     .sort((a, b) => Number(!overdue(a, today)) - Number(!overdue(b, today)) || (a.due ?? "9999").localeCompare(b.due ?? "9999") || b.order - a.order)
     .slice(0, 3);

@@ -31,6 +31,8 @@ interface TaskUpsert {
   chat_name?: string | null;
   /** The goal it belongs to (Work page), or null. Needs migration 20261102000001_task_goals.sql. */
   goal_id?: string | null;
+  /** On hold until this date. Needs migration 20261113000001_task_start_date.sql (dropped before). */
+  start_date?: string | null;
   updated_by: "Yasir" | "Claude";
 }
 
@@ -63,7 +65,7 @@ export function parseTaskUpserts(body: unknown): Parsed {
     // Errors name the field, and its list position when a list was sent.
     const at = single ? "" : `tasks[${i}].`;
     if (!isObject(raw)) return fail(`${single ? "task" : `tasks[${i}]`}: send an object.`);
-    const { external_id, title, status, owner, area, due_date, note, sort_order, next_steps, questions, chat_name, goal_id, updated_by } = raw;
+    const { external_id, title, status, owner, area, due_date, note, sort_order, next_steps, questions, chat_name, goal_id, start_date, updated_by } = raw;
 
     if (typeof external_id !== "string" || !external_id.trim() || external_id.trim().length > 100) {
       return fail(`${at}external_id: text, 1 to 100 characters.`);
@@ -93,6 +95,10 @@ export function parseTaskUpserts(body: unknown): Parsed {
     if (due_date !== undefined) {
       if (due_date !== null && !isDate(due_date)) return fail(`${at}due_date: YYYY-MM-DD, or null for none.`);
       task.due_date = due_date;
+    }
+    if (start_date !== undefined) {
+      if (start_date !== null && !isDate(start_date)) return fail(`${at}start_date: YYYY-MM-DD (on hold until then), or null.`);
+      task.start_date = start_date;
     }
     if (note !== undefined) {
       if (note !== null && (typeof note !== "string" || note.trim().length > 500)) return fail(`${at}note: text, up to 500 characters, or null.`);

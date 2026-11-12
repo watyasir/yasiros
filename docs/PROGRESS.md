@@ -20,17 +20,19 @@
 | — | Rebrand to Decko, Bento icon | ✅ Done (2 Nov 2026) |
 | — | Security + reliability pass | ✅ Done (2 Nov 2026) |
 | v10.2 | Section check-ins | ✅ Done (10 Nov 2026) |
+| v10.3 | On-hold goals and tasks | ✅ Done (13 Nov 2026) |
 
 ## ▶ Start here (current state, 10 Nov 2026)
 Read this block first; the sections below it are history, oldest first.
 
-**What's live** (yasiros.vercel.app, display name "Decko"): v10 Focus on the v9 Playground look. 4 tabs: Overview `/` (Today's 5 things as buttons that each open one check-in section, Next up, Money (one line until a bank has a balance), Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards); Check-in `/log` (a list of 5 sections + More, each opens the same sheet at `/log?section=<key>`); Settings (themes, season, trackers, calendar feeds, sign-in code, Gallery, share card, Claude's jobs). Every page again under `/demo` on fake data. `/money`, `/board`, `/winter-arc` redirect. No task pop-ups.
+**What's live** (yasiros.vercel.app, display name "Decko"): v10 Focus on the v9 Playground look. 4 tabs: Overview `/` (Today's 5 things as buttons that each open one check-in section, Next up, Money (one line until a bank has a balance), Winter Arc strip), Health `/health`, Finance `/finance`, Work `/work` (goal cards; on-hold goals and tasks small and grey until their start date); Check-in `/log` (a list of 5 sections + More, each opens the same sheet at `/log?section=<key>`); Settings (themes, season, trackers, calendar feeds, sign-in code, Gallery, share card, Claude's jobs). Every page again under `/demo` on fake data. `/money`, `/board`, `/winter-arc` redirect. No task pop-ups.
 
-**Database:** every file in `supabase/migrations/` (up to `20261102000001_task_goals.sql`) has been run on the live Supabase project. A new migration must be additive, and the app must keep working before it's run (catch Postgres `42703`, as `src/lib/task-store.ts` and `src/lib/tracker-store.ts` do).
+**Database:** every file in `supabase/migrations/` up to `20261102000001_task_goals.sql` has been run (the on-hold `20261113000001_task_start_date.sql` hasn't yet, see Still open) on the live Supabase project. A new migration must be additive, and the app must keep working before it's run (catch Postgres `42703`, as `src/lib/task-store.ts` and `src/lib/tracker-store.ts` do).
 
 **Checks before every push** (GitHub Actions runs them too, `.github/workflows/checks.yml`): `npm run build`, `npm run lint`, `npx tsc --noEmit`, `npx knip`, `npm run contrast`, `npm run privacy-check -- --all`, `npm audit --omit=dev`. Push to `main`, then confirm Vercel is green: `gh api repos/watyasir/yasiros/commits/<sha>/status`.
 
 **Still open**
+- [ ] Mac must: run the migration in the Supabase SQL editor (`supabase/migrations/20261113000001_task_start_date.sql`, adds `tasks.start_date`; until then task start dates are dropped, goal on-hold already works)
 - [ ] Yasir, GitHub: two-factor login; Settings → Advanced Security → Dependabot alerts + security updates on; Settings → Rules → ruleset for `main` with only "Restrict deletions" and "Block force pushes" (not "Require a pull request")
 - [ ] Yasir: free uptime monitor (e.g. UptimeRobot) on `https://yasiros.vercel.app/api/health`, every 5 minutes, email alert
 - [ ] Mac session: run `npm run backup` once to confirm it works, then weekly (or as a scheduled task)
@@ -40,7 +42,7 @@ Read this block first; the sections below it are history, oldest first.
 | What | Where |
 |---|---|
 | Spec and design rules (latest changelog wins) | `docs/DESIGN.md` |
-| API for Claude's tasks (log, summary, money, tasks, claude-jobs, day-plan, calendar, gallery, health) | `docs/API.md` |
+| API for Claude's tasks (log, summary, money, tasks, goals, claude-jobs, day-plan, calendar, gallery, health) | `docs/API.md` |
 | What happened each session | `docs/BUILD_LOG.md` |
 | Pages and routes | `src/app/` (real), `src/app/demo/` (fake data), `src/app/api/` |
 | App shell, tabs, Check-in + Settings buttons | `src/components/dashboard/` (`Dashboard.tsx`, `Nav.tsx`, `DashboardContext.tsx`) |

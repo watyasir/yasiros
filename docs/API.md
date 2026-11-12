@@ -218,6 +218,12 @@ Reply `200`: how many were created and updated, plus each saved task.
 { "external_id": "pack-kitchen", "title": "Pack the kitchen", "goal_id": "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f" }
 ```
 
+**Start date (on hold, 13 Nov 2026):** `start_date` (`YYYY-MM-DD`, or `null` for none) puts a task on hold until that day (India time): the Work page shows it small and grey at the bottom of its card, and it stays out of Next up, the open/overdue counts and the calendar feeds until then. A task on an on-hold goal (see Goals below) is on hold too. Nothing to switch on the day: it becomes a normal task by itself. Before migration `20261113000001_task_start_date.sql` is run, `start_date` is quietly dropped and the rest is saved; afterwards every reply includes it.
+
+```json
+{ "external_id": "renew-licence", "title": "Renew the licence", "start_date": "2027-01-25" }
+```
+
 **Older fields, still accepted:** `next_steps`, `questions` and `chat_name` are saved as before, but no page shows them since v10 (the due-task pop-up is gone).
 
 A body that doesn't fit gets `400` naming the field and list position, e.g. `"tasks[1].status: one of todo, doing, waiting, done."` or `"title: \"learn-sql\" is a new task, so it needs a title."` Nothing is saved when the body is rejected.
@@ -247,6 +253,28 @@ Deletes one task. Reply `200` `{ "ok": true, "deleted": "learn-sql" }`, or `404`
 ```bash
 curl -X DELETE https://yasiros.vercel.app/api/tasks/learn-sql -H "Authorization: Bearer $API_TOKEN"
 ```
+
+## Goals: GET /api/goals, PATCH /api/goals/:id
+
+Same `Authorization: Bearer <API_TOKEN>` as tasks.
+
+**GET /api/goals** lists every goal, nearest deadline first:
+
+```json
+{ "ok": true, "count": 1, "goals": [{ "id": "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f", "title": "Learn a language", "start_date": "2027-01-25", "deadline": "2027-04-30" }] }
+```
+
+**PATCH /api/goals/:id** changes one goal's `start_date`, and nothing else. A start date after today (India time) puts the goal on hold: a small grey card at the end of the Work page, its tasks out of Next up, the counts and the calendar feeds, until that day. Send today or an earlier date to make it active now.
+
+```bash
+curl -X PATCH https://yasiros.vercel.app/api/goals/3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f \
+  -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"start_date":"2027-01-25"}'
+```
+
+Reply `200` `{ "ok": true, "goal": { "id": "…", "title": "…", "start_date": "2027-01-25", "deadline": "2027-04-30" } }`. A missing or badly formatted `start_date` gets `400`; an unknown id gets `404`.
+
+---
 
 ## Claude's scheduled tasks: GET, POST and DELETE /api/claude-jobs
 
@@ -314,7 +342,7 @@ Nine colour-coded calendars for Apple Calendar, one per `cat`:
 Each feed sets `X-WR-CALNAME` and `X-APPLE-CALENDAR-COLOR`. Subscribe from **/settings → Calendar** (signed in): tap a name to open it as `webcal://`, or copy its link. `/progress` → **Subscribe in Calendar** leads there.
 
 - Phases repeat weekly on their days (India time). Dated phases (`from`/`until`) split the weeks into ranges, and each event repeats only until its range ends (`RRULE … UNTIL`), so an exam-week phase never doubles up with the one it replaces.
-- `tasks`: every task with a due date as an all-day event (done ones start with ✓).
+- `tasks`: every task with a due date as an all-day event (done ones start with ✓). On-hold tasks (own or goal's start date still ahead) join on their start date.
 - Without `&cat`, the original all-in-one "Decko" feed (everything above in one calendar) keeps working.
 - A wrong token or an unknown `cat` gets `404`. The token is the same one as the /progress share link, so anyone with that link could also read these feeds. The calendar app fetches them again about every hour.
 

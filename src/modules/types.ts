@@ -197,8 +197,9 @@ export interface DashboardData {
   shareHref: string;
   /** /settings, or /demo/settings (Gallery, Claude's jobs, about the themes). */
   settingsHref: string;
+  /** `start`: YYYY-MM-DD; a goal is on hold (small, grey on Work) until then. */
   /** `saving` = a money goal (unit ₹, or "fund"/"saving" in the name): Finance's "Saving for". */
-  goals: { id: string; name: string; area: string; deadline: string | null; progress: string; pct: number; by: string; tone: Tone; saving: boolean }[];
+  goals: { id: string; name: string; area: string; deadline: string | null; start: string | null; progress: string; pct: number; by: string; tone: Tone; saving: boolean }[];
   /** Open tasks plus the ones done in the last two weeks. */
   tasks: Task[];
   /** The demo's gallery. null on the real dashboard: the gallery loads when it's opened. */

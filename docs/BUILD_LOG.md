@@ -435,3 +435,19 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **What Yasir had to do himself:** Nothing.
 **Screenshot to take:** Phone Overview with the Meals sheet open over the Today card.
 **Next:** add opening balances so the Money wallet comes back.
+
+## Session 27 — 13 Nov 2026 — v10.3: On-hold goals and tasks
+**Goal:** Goals and tasks that start later shouldn't crowd the Work page or the counts today.
+**What I asked Claude Code to do:** "A goal or task that hasn't started is on hold: smaller and greyed out on Work until its start date, then normal by itself. Add a task start date, an API to set goal start dates, and keep them out of the counts and calendar."
+**What got built:**
+- One rule in one place: something is on hold when its start date is after today in India; a task is also on hold when its goal is. Nothing to switch off later.
+- Work: on-hold goals go last as small grey cards (just the title and "Starts 25 Jan"); tap one to open it. On-hold tasks sit at the bottom of their card as small grey rows.
+- Next up, the open/overdue counts and the calendar feeds skip on-hold tasks until they start.
+- The task sheet has "Starts on"; the tasks API takes `start_date`; new `GET /api/goals` and `PATCH /api/goals/:id` (start date only) for Claude's tasks.
+- A new migration adds the task start date. Until it runs, start dates are quietly dropped and everything else keeps saving.
+- Demo: one made-up on-hold goal and one on-hold task.
+**What broke and how we fixed it:** Nothing broke. Outside components or sites used: none.
+**What Yasir had to do himself:** Run the migration in the Supabase SQL editor (one line).
+**Screenshot to take:** Phone Work page scrolled to the bottom, showing the grey on-hold card under the active ones.
+**Next:** set start dates on the goals that begin later.
+

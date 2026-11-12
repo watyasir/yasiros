@@ -20,6 +20,7 @@ export function buildGoals(goals: Goal[], tracked: Map<string, number>, trackers
       name: g.title,
       area: g.area,
       deadline: g.deadline,
+      start: g.start,
       saving: isSaving(g),
       progress: isRupees(unit) ? `${formatRupees(now)} of ${formatRupees(g.target)}` : `${formatAmount(round1(now))} of ${formatAmount(g.target)}${u}`,
       pct,

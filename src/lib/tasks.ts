@@ -22,6 +22,8 @@ export interface Task {
   doneAt: string | null;
   /** The goal this task is part of (Work page), or null = a loose task. */
   goalId: string | null;
+  /** YYYY-MM-DD it starts; until then it's on hold. null = already going. */
+  start: string | null;
 }
 
 /** What the task sheet saves. */
@@ -34,6 +36,8 @@ export interface NewTask {
   owner: Owner;
   /** The Work card it's on; null = loose. */
   goalId: string | null;
+  /** "Starts on": on hold until then. */
+  start: string | null;
 }
 
 /** The Board columns, in order. */
@@ -56,10 +60,23 @@ export function taskProblem(t: NewTask): string | null {
   if (t.title.trim().length > 120) return "Keep the title under 120 characters.";
   if (t.area.trim().length > 40) return "Keep the area under 40 characters.";
   if (t.due && !ISO_DATE.test(t.due)) return "Pick a due date from the calendar.";
+  if (t.start && !ISO_DATE.test(t.start)) return "Pick a start date from the calendar.";
   if (!TASK_STATUSES.includes(t.status)) return "Pick a column.";
   if (t.note.trim().length > 500) return "Keep the note under 500 characters.";
   if (!OWNERS.includes(t.owner)) return "Pick who's on it.";
   return null;
+}
+
+/** On hold: starts after today (dates in India). It turns active by itself on the day. */
+export const notStarted = (start: string | null | undefined, today: string) => !!start && start > today;
+
+/**
+ * Which tasks are on hold: their own start date is still ahead, or their goal's is.
+ * `goals` = the goals with their start dates (YYYY-MM-DD).
+ */
+export function heldTasks(tasks: Pick<Task, "id" | "start" | "goalId">[], goals: { id: string; start: string | null }[], today: string): Set<string> {
+  const heldGoals = new Set(goals.filter((g) => notStarted(g.start, today)).map((g) => g.id));
+  return new Set(tasks.filter((t) => notStarted(t.start, today) || (t.goalId !== null && heldGoals.has(t.goalId))).map((t) => t.id));
 }
 
 export function dueState(task: Task, today: string): "soon" | "overdue" | undefined {
@@ -80,6 +97,8 @@ export interface Goal {
   unit: string | null;
   /** YYYY-MM-DD or null. */
   deadline: string | null;
+  /** YYYY-MM-DD the goal starts; on hold until then. */
+  start: string | null;
   /** null = progress typed in by hand. */
   trackerId: string | null;
   /** Hand-typed progress (ignored when linked to a tracker). */
