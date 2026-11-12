@@ -447,7 +447,7 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 - A new migration adds the task start date. Until it runs, start dates are quietly dropped and everything else keeps saving.
 - Demo: one made-up on-hold goal and one on-hold task.
 **What broke and how we fixed it:** Nothing broke. Outside components or sites used: none.
-**What Yasir had to do himself:** Run the migration in the Supabase SQL editor (one line).
+**What Yasir had to do himself:** Nothing. Claude ran the migration in the Supabase SQL editor and checked the live API returns `start_date`.
 **Screenshot to take:** Phone Work page scrolled to the bottom, showing the grey on-hold card under the active ones.
 **Next:** set start dates on the goals that begin later.
 
