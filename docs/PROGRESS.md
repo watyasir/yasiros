@@ -21,6 +21,7 @@
 | — | Security + reliability pass | ✅ Done (2 Nov 2026) |
 | v10.2 | Section check-ins | ✅ Done (10 Nov 2026) |
 | v10.3 | On-hold goals and tasks | ✅ Done (13 Nov 2026) |
+| — | Fixes: ticked tasks, live Work count, proxy, speed | ✅ Done (14 Nov 2026) |
 
 ## ▶ Start here (current state, 10 Nov 2026)
 Read this block first; the sections below it are history, oldest first.
@@ -29,7 +30,9 @@ Read this block first; the sections below it are history, oldest first.
 
 **Database:** every file in `supabase/migrations/` up to `20261113000001_task_start_date.sql` has been run (13 Nov 2026) on the live Supabase project. A new migration must be additive, and the app must keep working before it's run (catch Postgres `42703`, as `src/lib/task-store.ts` and `src/lib/tracker-store.ts` do).
 
-**Checks before every push** (GitHub Actions runs them too, `.github/workflows/checks.yml`): `npm run build`, `npm run lint`, `npx tsc --noEmit`, `npx knip`, `npm run contrast`, `npm run privacy-check -- --all`, `npm audit --omit=dev`. Push to `main`, then confirm Vercel is green: `gh api repos/watyasir/yasiros/commits/<sha>/status`.
+**Tasks on the page (14 Nov):** task changes wait in `src/components/dashboard/pendingTasks.ts` until a list read after their save arrives; every save calls `dashboardChanged()` (`src/lib/dashboard/fresh.ts`). "Open" = `openTasks` in `src/lib/tasks.ts` everywhere. Each page passes its own view to `Dashboard`.
+
+**Checks before every push** (GitHub Actions runs them too, `.github/workflows/checks.yml`): `npm run build`, `npm test`, `npm run lint`, `npx tsc --noEmit`, `npx knip`, `npm run contrast`, `npm run privacy-check -- --all`, `npm audit --omit=dev`. Push to `main`, then confirm Vercel is green: `gh api repos/watyasir/yasiros/commits/<sha>/status`.
 
 **Still open**
 - Done 13 Nov: Mac must: run the migration in the Supabase SQL editor (`20261113000001_task_start_date.sql` run, `tasks.start_date` live, API returns it)

@@ -451,3 +451,18 @@ How the Winter Arc Dashboard was built, session by session, by directing Claude 
 **Screenshot to take:** Phone Work page scrolled to the bottom, showing the grey on-hold card under the active ones.
 **Next:** set start dates on the goals that begin later.
 
+
+## Session 28 — 14 Nov 2026 — Fixes: ticked tasks, Work count, proxy, speed
+**Goal:** Ticked tasks shouldn't come back, the Work number should drop the moment a task is ticked, and the app should be measured and made lighter.
+**What I asked Claude Code to do:** "Fix the ticked task that pops back, make the Work count live and add up across the goal cards, fix the proxy list, measure speed and fix what the numbers show, then clean up."
+**What got built:**
+- Ticked tasks stay ticked. Every save (tasks, goals, check-in, workouts, settings) now expires one shared "dashboard" cache and every page under `/`, so all 4 tabs read fresh. On the page, each task change waits in a small store that survives tab switches and is laid over any task list read before its save landed (the server stamps both times). A failed save takes back only its own task; Undo still works.
+- One rule for "open" (not done, not on hold) drives the Work tab number, the Work subtitle, Next up, the "N left" toast and a new "· N open" on each goal card. They all count the live list, so they drop at once and the cards add up to the tab. The demo's hard-coded "11" was wrong (it was 12).
+- `npm test` (Node's built-in test runner, no new library): the badge equals the sum of the cards, Loose tasks included; quick ticks, preloaded tabs, Undo and a failed save. It runs in CI too.
+- The proxy now covers `/work` and `/finance` (keeps the login cookie fresh there) and drops the old addresses that redirect before it runs.
+- Each page loads only its own view's code: 170 → 156–161 KB gzip JS per page.
+**Speed (measured, live, signed in, before):** functions and edge both in Mumbai (bom1, same as the database). `/` HTML with data ~300 ms, first paint ~470–580 ms; `/work` HTML ~200–250 ms, first paint ~465–510 ms. Tab switches 14–90 ms, no skeleton, no reload. The data load is one batch of 12 queries in parallel (a second read only once the season is older than the 90-day chart window), so nothing to shorten there. Confetti, tilt and chart code are ~3 KB gzip together, so they stay loaded (lazy-loading would delay the first tick).
+**What broke and how we fixed it:** The first fix (forget a change once the server agrees) still let a tab preloaded before the tick bring it back; a unit test caught it, and the fix moved to server timestamps.
+**What Yasir had to do himself:** Nothing.
+**Screenshot to take:** Work page with the "· N open" counts on the cards and the matching number on the tab.
+**Next:** nothing open from this pass.
