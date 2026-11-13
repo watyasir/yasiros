@@ -8,8 +8,11 @@ import { supabaseKey, supabaseUrl } from "@/lib/supabase/config";
   browser stays signed in), signs you out 7 days after you signed in (src/lib/session.ts),
   and sends signed-out visitors to /login. The allowed-email check happens in requireUser().
 */
-/** Pages that need sign-in ("/" shows a welcome, "/progress" a share card, so they stay open). */
-const PRIVATE = ["/log", "/settings", "/winter-arc", "/board", "/money", "/health", "/gallery"];
+/**
+ * Pages that need sign-in ("/" shows a welcome, "/progress" a share card, so they stay open).
+ * The old /money, /board and /winter-arc never get here: next.config.ts redirects run first.
+ */
+const PRIVATE = ["/log", "/settings", "/health", "/finance", "/work", "/gallery"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -58,5 +61,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // The pages, so the login cookie stays fresh on each ("/" and "/progress" stay open to visitors).
-  matcher: ["/", "/winter-arc", "/board", "/money", "/health", "/gallery", "/log/:path*", "/login", "/settings/:path*", "/progress"],
+  matcher: ["/", "/health", "/finance", "/work", "/gallery", "/log/:path*", "/login", "/settings/:path*", "/progress"],
 };
