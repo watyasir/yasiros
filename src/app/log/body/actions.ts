@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { dashboardChanged } from "@/lib/dashboard/fresh";
 import { bodyCheckProblem, type BodyCheckInput, type SaveResult } from "@/lib/body";
 import { todayISO } from "@/lib/trackers";
 
@@ -27,7 +27,6 @@ export async function saveBodyCheck(input: BodyCheckInput): Promise<SaveResult> 
     supabase.from("user_settings").upsert({ user_id: user.id, weight_goal_kg: input.goal }, { onConflict: "user_id" }),
   ]);
   if (check.error || settings.error) return { ok: false, message: "Couldn't save. Check your connection and try again." };
-  revalidatePath("/");
-  revalidatePath("/log/body");
+  dashboardChanged();
   return { ok: true };
 }

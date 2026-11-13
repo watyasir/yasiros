@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useToast } from "@/components/Toast";
 import type { NewTask, Task, TaskStatus } from "@/lib/tasks";
-import type { DashboardData, GalleryActions, SaveCheckin, TaskActions, ViewId } from "@/modules/types";
+import type { DashboardData, GalleryActions, SaveCheckin, TaskActions, TaskSaved, ViewId } from "@/modules/types";
+import { pendingStores, withPending, type PendingChange } from "./pendingTasks";
 
 interface DashboardState {
   data: DashboardData;
@@ -26,8 +27,9 @@ interface DashboardState {
 const shown = (task: NewTask) => ({ ...task, title: task.title.trim(), area: task.area.trim(), note: task.note.trim() || null });
 
 /** Moving into Done stamps the time, so it tops the Done column (the server does the same). */
-const withStatus = (task: Task, before: TaskStatus): Task =>
-  task.status === before ? task : { ...task, doneAt: task.status === "done" ? new Date().toISOString() : null };
+const withStatus = (task: Task, before: TaskStatus, doneAt: string): Task =>
+  task.status === before ? task : { ...task, doneAt: task.status === "done" ? doneAt : null };
+
 
 const DashboardContext = createContext<DashboardState | null>(null);
 
@@ -39,6 +41,7 @@ export function useDashboard() {
 
 export function DashboardProvider({
   data,
+  loadedAt = 0,
   view,
   taskActions,
   galleryActions,
@@ -46,6 +49,8 @@ export function DashboardProvider({
   children,
 }: {
   data: DashboardData;
+  /** Server time (ms) the data was read; the demo's never changes. */
+  loadedAt?: number;
   view: ViewId;
   /** Real dashboard only: saves task changes. */
   taskActions?: TaskActions;
@@ -54,41 +59,52 @@ export function DashboardProvider({
   children: ReactNode;
 }) {
   const toast = useToast();
-  const [tasks, setTasks] = useState(data.tasks);
   const [taskError, setTaskError] = useState<string | null>(null);
-  const [shownTasks, setShownTasks] = useState(data.tasks);
-  if (shownTasks !== data.tasks) {
-    setShownTasks(data.tasks);
-    setTasks(data.tasks);
-  }
-  /** Shows the change now; on the real dashboard, saves it and puts things back if that fails. */
-  const changeTasks = (change: (t: Task[]) => Task[], save: ((a: TaskActions) => Promise<{ ok: boolean }>) | null, failMsg: string) => {
-    const before = tasks;
-    setTasks(change);
+  const store = taskActions ? pendingStores.real : pendingStores.demo;
+  const pending = useSyncExternalStore(store.subscribe, store.get, store.get);
+  const tasks = useMemo(() => withPending(data.tasks, loadedAt, pending), [data.tasks, loadedAt, pending]);
+
+  /** Shows the change now; on the real dashboard, saves it and takes back only this change if that fails. */
+  const changeTasks = (apply: PendingChange["apply"], save: ((a: TaskActions) => Promise<TaskSaved>) | null, failMsg: string) => {
+    const key = store.add(apply);
     setTaskError(null);
     if (!taskActions || !save) return;
     save(taskActions)
-      .catch(() => ({ ok: false }))
+      .catch((): TaskSaved => ({ ok: false }))
       .then((res) => {
-        if (res.ok) return;
-        setTasks(before);
+        if (res.ok) return store.saved(key, res.at);
+        store.drop(key);
         setTaskError(`${failMsg} Check your connection and try again.`);
         toast({ text: `${failMsg} Try again.`, tone: "danger" });
       });
   };
-  const addTask = (task: NewTask) =>
-    changeTasks(
-      (t) => [...t, { id: `new-${Date.now()}`, ...shown(task), order: 0, doneAt: task.status === "done" ? new Date().toISOString() : null, goalId: task.goalId }],
-      (a) => a.add(task),
-      "Couldn't add the task.",
-    );
+  const now = () => new Date().toISOString();
+  const addTask = (task: NewTask) => {
+    const temp: Task = { id: `new-${Date.now()}`, ...shown(task), order: 0, doneAt: task.status === "done" ? now() : null, goalId: task.goalId };
+    // A list that already has it (read in the moment the save landed) doesn't get it twice.
+    const known = new Set(data.tasks.map((t) => t.id));
+    const has = (list: Task[]) => list.some((t) => !known.has(t.id) && !t.id.startsWith("new-") && t.title === temp.title);
+    changeTasks((list) => (has(list) ? list : [...list, temp]), (a) => a.add(task), "Couldn't add the task.");
+  };
   // Tasks added a moment ago ("new-…") change on the page only, until the server sends their real id.
-  const updateTask = (id: string, task: NewTask) =>
-    changeTasks((t) => t.map((k) => (k.id === id ? withStatus({ ...k, ...shown(task) }, k.status) : k)), id.startsWith("new-") ? null : (a) => a.update(id, task), "Couldn't save the task.");
-  const moveTask = (id: string, status: TaskStatus) =>
-    changeTasks((t) => t.map((k) => (k.id === id ? withStatus({ ...k, status }, k.status) : k)), id.startsWith("new-") ? null : (a) => a.move(id, status), "Couldn't move the task.");
+  const updateTask = (id: string, task: NewTask) => {
+    const at = now();
+    changeTasks(
+      (list) => list.map((k) => (k.id === id ? withStatus({ ...k, ...shown(task) }, k.status, at) : k)),
+      id.startsWith("new-") ? null : (a) => a.update(id, task),
+      "Couldn't save the task.",
+    );
+  };
+  const moveTask = (id: string, status: TaskStatus) => {
+    const at = now();
+    changeTasks(
+      (list) => list.map((k) => (k.id === id ? withStatus({ ...k, status }, k.status, at) : k)),
+      id.startsWith("new-") ? null : (a) => a.move(id, status),
+      "Couldn't move the task.",
+    );
+  };
   const deleteTask = (id: string) =>
-    changeTasks((t) => t.filter((k) => k.id !== id), id.startsWith("new-") ? null : (a) => a.remove(id), "Couldn't delete the task.");
+    changeTasks((list) => list.filter((k) => k.id !== id), id.startsWith("new-") ? null : (a) => a.remove(id), "Couldn't delete the task.");
 
   const value: DashboardState = {
     data,

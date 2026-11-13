@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { dashboardChanged } from "@/lib/dashboard/fresh";
 import { createSignInCode } from "@/lib/signin-code";
 import type { SaveResult } from "@/lib/body";
 import { SEASON_DAYS, SEASON_NAME, seasonProblem, slugify, trackerProblem, type SeasonInput, type TrackerInput } from "@/lib/settings";
@@ -10,9 +10,7 @@ import { isTheme, type ThemeId } from "@/lib/theme";
 const FAILED: SaveResult = { ok: false, message: "Couldn't save. Check your connection and try again." };
 
 function done(): SaveResult {
-  revalidatePath("/");
-  revalidatePath("/log");
-  revalidatePath("/settings");
+  dashboardChanged();
   return { ok: true };
 }
 

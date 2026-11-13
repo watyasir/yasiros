@@ -1,9 +1,10 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { PageSkeleton } from "@/components/Skeleton";
 import { currentOwner } from "@/lib/auth";
+import { DASHBOARD_TAG } from "@/lib/dashboard/fresh";
 import { loadDashboardData } from "@/lib/dashboard/load";
 import type { ViewId } from "@/modules/types";
 import { saveCheckIn } from "./log/actions";
@@ -35,6 +36,7 @@ async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.Re
   return (
     <Dashboard
       data={loaded.data}
+      loadedAt={loaded.loadedAt}
       view={view}
       taskActions={{ add: addTask, update: updateTask, move: moveTask, remove: deleteTask }}
       galleryActions={{ list: listGallery, remove: deleteGalleryItem }}
@@ -46,13 +48,16 @@ async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.Re
 /*
   The dashboard data as a private cache (per signed-in browser, never shared on the server), so
   each tab's preload carries the data along and even a first tap on Health, Finance or Work opens
-  instantly, like the check-in. Fresh for 60 seconds; every save refreshes the page anyway.
+  instantly, like the check-in. Fresh for 60 seconds; every save expires it (dashboardChanged).
 */
 async function ownerData() {
   "use cache: private";
   cacheLife({ stale: 60 });
+  cacheTag(DASHBOARD_TAG);
   const owner = await currentOwner();
   if (!owner) return { state: "out" as const };
+  // Taken before the reads: any save that landed before this moment is in the data.
+  const loadedAt = Date.now();
   const data = await loadDashboardData(owner.supabase);
-  return data ? { state: "ok" as const, data } : { state: "error" as const };
+  return data ? { state: "ok" as const, data, loadedAt } : { state: "error" as const };
 }

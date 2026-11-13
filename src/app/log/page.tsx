@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
 import { SheetSkeleton } from "@/components/Skeleton";
 import { CheckInHub } from "@/components/checkin/CheckInHub";
 import { MoreLogs } from "@/components/checkin/MoreLogs";
 import { currentOwner, requireUser } from "@/lib/auth";
+import { DASHBOARD_TAG } from "@/lib/dashboard/fresh";
 import { loadTrackersWithStatus } from "@/lib/tracker-store";
 import { addDays, formatDayLabel, startingValue, todayISO, type CheckInValues } from "@/lib/trackers";
 import { saveCheckIn } from "./actions";
@@ -63,6 +64,7 @@ async function TodayCheckIn() {
 async function loadCheckIn() {
   "use cache: private";
   cacheLife({ stale: 60 });
+  cacheTag(DASHBOARD_TAG);
   const owner = await currentOwner();
   if (!owner) return null;
   const { supabase } = owner;

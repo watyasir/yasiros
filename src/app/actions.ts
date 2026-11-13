@@ -1,10 +1,11 @@
 "use server";
 
-import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { dashboardChanged } from "@/lib/dashboard/fresh";
 import { guessGoal, newGoalFor } from "@/lib/goal-guess";
 import { fileNameFor, type GalleryItem, type GalleryMime } from "@/lib/gallery";
 import { TASK_STATUSES, taskProblem, type NewTask, type TaskStatus } from "@/lib/tasks";
+import type { TaskSaved } from "@/modules/types";
 
 /** The columns the task sheet saves. Changes from the app are marked as Yasir's. */
 const taskRow = (task: NewTask, newer: number) => ({
@@ -24,16 +25,16 @@ const taskRow = (task: NewTask, newer: number) => ({
  * without goal_id too (0), while those migrations haven't run (Postgres 42703 "column does not
  * exist"), so the sheet works either way.
  */
-async function withColumnFallback(save: (newer: number) => PromiseLike<{ error: { code?: string } | null }>): Promise<{ ok: boolean }> {
+async function withColumnFallback(save: (newer: number) => PromiseLike<{ error: { code?: string } | null }>): Promise<TaskSaved> {
   let { error } = await save(2);
   for (const newer of [1, 0]) if (error?.code === "42703" || error?.code === "PGRST204") ({ error } = await save(newer));
   if (error) return { ok: false };
-  refresh();
-  return { ok: true };
+  dashboardChanged();
+  return { ok: true, at: Date.now() };
 }
 
 /** Adds a task from the Work page. Without a goal picked, it goes on the goal its history points to, or a new one. */
-export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
+export async function addTask(task: NewTask): Promise<TaskSaved> {
   if (taskProblem(task)) return { ok: false };
   const { supabase, user } = await requireUser();
   if (!task.goalId) {
@@ -55,28 +56,28 @@ export async function addTask(task: NewTask): Promise<{ ok: boolean }> {
 }
 
 /** Saves the task sheet. Row-level security limits this to the user's own tasks. */
-export async function updateTask(id: string, task: NewTask): Promise<{ ok: boolean }> {
+export async function updateTask(id: string, task: NewTask): Promise<TaskSaved> {
   if (taskProblem(task)) return { ok: false };
   const { supabase } = await requireUser();
   return withColumnFallback((g) => supabase.from("tasks").update(taskRow(task, g)).eq("id", id));
 }
 
 /** Changes a task's status (ticking one off moves it to Done; Undo puts it back). */
-export async function moveTask(id: string, status: TaskStatus): Promise<{ ok: boolean }> {
+export async function moveTask(id: string, status: TaskStatus): Promise<TaskSaved> {
   if (!TASK_STATUSES.includes(status)) return { ok: false };
   const { supabase } = await requireUser();
   const { error } = await supabase.from("tasks").update({ status, updated_by: "Yasir" }).eq("id", id);
   if (error) return { ok: false };
-  refresh();
-  return { ok: true };
+  dashboardChanged();
+  return { ok: true, at: Date.now() };
 }
 
-export async function deleteTask(id: string): Promise<{ ok: boolean }> {
+export async function deleteTask(id: string): Promise<TaskSaved> {
   const { supabase } = await requireUser();
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) return { ok: false };
-  refresh();
-  return { ok: true };
+  dashboardChanged();
+  return { ok: true, at: Date.now() };
 }
 
 // ---------------------------------------------------------------- gallery

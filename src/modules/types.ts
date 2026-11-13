@@ -52,11 +52,14 @@ export interface GalleryActions {
   remove: (id: string) => Promise<{ ok: boolean }>;
 }
 
+/** A task save's answer; `at` = server time (ms) it landed, so older cached lists get the change laid over them. */
+export type TaskSaved = { ok: true; at: number } | { ok: false };
+
 export interface TaskActions {
-  add: (task: NewTask) => Promise<{ ok: boolean }>;
-  update: (id: string, task: NewTask) => Promise<{ ok: boolean }>;
-  move: (id: string, status: TaskStatus) => Promise<{ ok: boolean }>;
-  remove: (id: string) => Promise<{ ok: boolean }>;
+  add: (task: NewTask) => Promise<TaskSaved>;
+  update: (id: string, task: NewTask) => Promise<TaskSaved>;
+  move: (id: string, status: TaskStatus) => Promise<TaskSaved>;
+  remove: (id: string) => Promise<TaskSaved>;
 }
 
 /*
@@ -73,8 +76,8 @@ export interface DashboardData {
   basePath: "" | "/demo";
   /** Where "Log Today" goes: /demo/log on the demo, /log for real. */
   logHref: string;
+  /** Work's subtitle is only a lead-in ("Sample data" on the demo); the page adds the live task counts. */
   views: Record<ViewId, { title: string; subtitle: string }>;
-  navBadges: Partial<Record<ViewId, string>>;
   season: {
     name: string;
     length: number;

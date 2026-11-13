@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { dashboardChanged } from "@/lib/dashboard/fresh";
 import { workoutProblem, type SaveResult, type WorkoutInput } from "@/lib/body";
 import { todayISO } from "@/lib/trackers";
 
@@ -25,9 +25,7 @@ export async function saveWorkout(input: WorkoutInput): Promise<SaveResult> {
       .from("entries")
       .upsert({ user_id: user.id, tracker_id: tracker.id, entry_date: input.date, value: 1 }, { onConflict: "tracker_id,entry_date" });
   }
-  revalidatePath("/");
-  revalidatePath("/log");
-  revalidatePath("/log/workout");
+  dashboardChanged();
   return { ok: true };
 }
 
@@ -37,7 +35,6 @@ export async function deleteWorkout(id: string): Promise<SaveResult> {
   // Row-level security limits this to the user's own workouts.
   const { error } = await supabase.from("workouts").delete().eq("id", id);
   if (error) return { ok: false, message: "Couldn't delete. Try again." };
-  revalidatePath("/");
-  revalidatePath("/log/workout");
+  dashboardChanged();
   return { ok: true };
 }

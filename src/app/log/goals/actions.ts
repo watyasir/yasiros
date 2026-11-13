@@ -1,15 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { dashboardChanged } from "@/lib/dashboard/fresh";
 import type { SaveResult } from "@/lib/body";
 import { goalProblem, type NewGoal } from "@/lib/tasks";
 
 const FAILED: SaveResult = { ok: false, message: "Couldn't save. Check your connection and try again." };
 
 function done(): SaveResult {
-  revalidatePath("/");
-  revalidatePath("/log/goals");
+  dashboardChanged();
   return { ok: true };
 }
 
