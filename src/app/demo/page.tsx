@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { demoData } from "@/data/demo";
+import { OverviewView } from "@/modules/overview/OverviewView";
 
 export const metadata: Metadata = {
   title: "Demo",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  return <Dashboard data={demoData} view="overview" />;
+  return (
+    <Dashboard data={demoData} view="overview">
+      <OverviewView />
+    </Dashboard>
+  );
 }

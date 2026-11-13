@@ -1,10 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { OwnerDashboard } from "./OwnerDashboard";
+import { OverviewView } from "@/modules/overview/OverviewView";
 
 /** Signed in as the owner: the Overview. Anyone else: a short welcome with the demo link. */
 export default function Home() {
-  return <OwnerDashboard view="overview" signedOut={<Welcome />} />;
+  return (
+    <OwnerDashboard view="overview" signedOut={<Welcome />}>
+      <OverviewView />
+    </OwnerDashboard>
+  );
 }
 
 function Welcome() {

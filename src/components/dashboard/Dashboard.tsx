@@ -2,25 +2,12 @@
 
 import { ViewTransition } from "react";
 import { ToastProvider } from "@/components/Toast";
-import { FinanceView } from "@/modules/finance/FinanceView";
-import { GalleryView } from "@/modules/gallery/GalleryView";
-import { HealthView } from "@/modules/health/HealthView";
 import { OverviewHeader } from "@/modules/overview/OverviewHeader";
-import { OverviewView } from "@/modules/overview/OverviewView";
 import type { DashboardData, GalleryActions, SaveCheckin, TaskActions, ViewId } from "@/modules/types";
-import { WorkView } from "@/modules/work/WorkView";
 import { openTasks, workSummary } from "@/lib/tasks";
 import { DashboardProvider, useDashboard } from "./DashboardContext";
 import { TabBar, TopBar } from "./Nav";
 import { ThemeSync } from "./ThemeSync";
-
-const VIEWS: Record<ViewId, () => React.JSX.Element> = {
-  overview: OverviewView,
-  health: HealthView,
-  finance: FinanceView,
-  work: WorkView,
-  gallery: GalleryView,
-};
 
 /**
  * The app frame for every page: top bar, the page's title, the view, and the phone tab bar.
@@ -33,6 +20,7 @@ export function Dashboard({
   taskActions,
   galleryActions,
   saveCheckin,
+  children,
 }: {
   data: DashboardData;
   /** Server time (ms) the real data was read. */
@@ -41,8 +29,9 @@ export function Dashboard({
   taskActions?: TaskActions;
   galleryActions?: GalleryActions;
   saveCheckin?: SaveCheckin;
+  /** The page's view (OverviewView, WorkView, …), passed in by each page so it only loads its own code. */
+  children: React.ReactNode;
 }) {
-  const View = VIEWS[view];
   return (
     <ToastProvider>
     <DashboardProvider data={data} loadedAt={loadedAt} view={view} taskActions={taskActions} galleryActions={galleryActions} saveCheckin={saveCheckin}>
@@ -53,7 +42,7 @@ export function Dashboard({
         {/* Switching tabs fades and slides the page in (globals.css, off with reduced motion). */}
         <ViewTransition default="page">
           <main className="min-w-0">
-            <View />
+            {children}
           </main>
         </ViewTransition>
       </div>

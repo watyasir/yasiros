@@ -14,17 +14,19 @@ import { addTask, deleteGalleryItem, deleteTask, listGallery, moveTask, updateTa
  * One page of the real app, signed in as the owner. Every page reads the same data (private
  * cache, preloaded with each tab), so moving between them is instant. Anyone else goes to /login (`/` shows a welcome instead).
  */
-export function OwnerDashboard({ view, signedOut }: { view: ViewId; signedOut?: React.ReactNode }) {
+export function OwnerDashboard({ view, signedOut, children }: { view: ViewId; signedOut?: React.ReactNode; children: React.ReactNode }) {
   return (
     <Suspense
       fallback={<PageSkeleton />}
     >
-      <Content view={view} signedOut={signedOut} />
+      <Content view={view} signedOut={signedOut}>
+        {children}
+      </Content>
     </Suspense>
   );
 }
 
-async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.ReactNode }) {
+async function Content({ view, signedOut, children }: { view: ViewId; signedOut?: React.ReactNode; children: React.ReactNode }) {
   const loaded = await ownerData();
   if (loaded.state === "out") {
     if (signedOut) return signedOut;
@@ -41,7 +43,9 @@ async function Content({ view, signedOut }: { view: ViewId; signedOut?: React.Re
       taskActions={{ add: addTask, update: updateTask, move: moveTask, remove: deleteTask }}
       galleryActions={{ list: listGallery, remove: deleteGalleryItem }}
       saveCheckin={saveCheckIn}
-    />
+    >
+      {children}
+    </Dashboard>
   );
 }
 
