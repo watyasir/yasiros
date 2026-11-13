@@ -6,7 +6,7 @@ import { Segmented } from "@/components/Segmented";
 import { Tile, type TileTone } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { shortDate } from "@/lib/trackers";
-import { heldTasks, notStarted, type Task } from "@/lib/tasks";
+import { byGoal, heldTasks, notStarted, openTasks, type Task } from "@/lib/tasks";
 import { GoalCard, type CardModel } from "./GoalCard";
 import { TaskSheet, type SheetTarget } from "./TaskSheet";
 
@@ -25,14 +25,18 @@ export function WorkView() {
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
 
   const today = data.todayISO;
-  const goalIds = new Set(data.goals.map((g) => g.id));
   const held = heldTasks(tasks, data.goals, today);
   // An on-hold task's chip shows its own start date, or else its goal's.
   const goalStart = new Map(data.goals.map((g) => [g.id, g.start]));
   const startOf = (t: Task) => (notStarted(t.start, today) ? t.start! : goalStart.get(t.goalId ?? "")!);
-  const split = (list: Task[]) => ({ tasks: list, held: list.filter((t) => held.has(t.id) && t.status !== "done").map((t) => ({ task: t, start: startOf(t) })) });
+  const split = (list: Task[]) => ({
+    tasks: list,
+    open: openTasks(list, data.goals, today),
+    held: list.filter((t) => held.has(t.id) && t.status !== "done").map((t) => ({ task: t, start: startOf(t) })),
+  });
+  const groups = byGoal(tasks, data.goals.map((g) => g.id));
   const cards: CardModel[] = data.goals.map((g, i) => {
-    const own = tasks.filter((t) => t.goalId === g.id);
+    const own = groups[i].tasks;
     return {
       key: g.id,
       meta: `${g.area || "Goal"} · ${g.deadline ? `by ${shortDate(g.deadline)}` : "no deadline"}`,
@@ -44,8 +48,8 @@ export function WorkView() {
       tone: TONES[i % TONES.length],
     };
   });
-  const loose = tasks.filter((t) => !t.goalId || !goalIds.has(t.goalId));
-  if (loose.length) cards.push({ key: "loose", meta: "No goal", name: "Loose tasks", goalId: null, ...split(loose), start: null, pct: pctDone(loose), tone: "card" });
+  const loose = groups[data.goals.length]?.tasks;
+  if (loose) cards.push({ key: "loose", meta: "No goal", name: "Loose tasks", goalId: null, ...split(loose), start: null, pct: pctDone(loose), tone: "card" });
   // On-hold goals go after the active ones (stable: each group keeps its deadline order).
   cards.sort((a, b) => Number(!!a.start) - Number(!!b.start));
 

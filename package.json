@@ -10,6 +10,7 @@
     "prepare": "git config core.hooksPath scripts/hooks || true",
     "privacy-check": "node scripts/privacy-check.mjs",
     "contrast": "node scripts/contrast.mjs",
+    "test": "node --test tests/*.test.mjs",
     "backup": "node --env-file=.env.local scripts/backup.mjs"
   },
   "dependencies": {

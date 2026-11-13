@@ -79,7 +79,33 @@ export function heldTasks(tasks: Pick<Task, "id" | "start" | "goalId">[], goals:
   return new Set(tasks.filter((t) => notStarted(t.start, today) || (t.goalId !== null && heldGoals.has(t.goalId))).map((t) => t.id));
 }
 
-export function dueState(task: Task, today: string): "soon" | "overdue" | undefined {
+/**
+ * Open work: not done and not on hold. The Work tab's number, the Work subtitle and every goal
+ * card count with this, so the cards add up to the tab and a tick shows everywhere at once.
+ */
+export function openTasks<T extends Pick<Task, "id" | "start" | "goalId" | "status">>(tasks: T[], goals: { id: string; start: string | null }[], today: string): T[] {
+  const held = heldTasks(tasks, goals, today);
+  return tasks.filter((t) => t.status !== "done" && !held.has(t.id));
+}
+
+/** One group per goal (in the goals' order), then the loose tasks (no goal, or one that's gone) if any. */
+export function byGoal<T extends Pick<Task, "goalId">>(tasks: T[], goalIds: string[]): { goalId: string | null; tasks: T[] }[] {
+  const known = new Set(goalIds);
+  const groups: { goalId: string | null; tasks: T[] }[] = goalIds.map((id) => ({ goalId: id, tasks: tasks.filter((t) => t.goalId === id) }));
+  const loose = tasks.filter((t) => !t.goalId || !known.has(t.goalId));
+  if (loose.length) groups.push({ goalId: null, tasks: loose });
+  return groups;
+}
+
+/** The Work subtitle: "5 open · 1 overdue · 2 due today", or "No open tasks". `open` from openTasks. */
+export function workSummary(open: Task[], today: string): string {
+  if (open.length === 0) return "No open tasks";
+  const overdue = open.filter((t) => dueState(t, today) === "overdue").length;
+  const dueToday = open.filter((t) => t.due === today).length;
+  return `${open.length} open${overdue ? ` · ${overdue} overdue` : ""}${dueToday ? ` · ${dueToday} due today` : ""}`;
+}
+
+function dueState(task: Task, today: string): "soon" | "overdue" | undefined {
   if (!task.due || task.status === "done") return undefined;
   if (task.due < today) return "overdue";
   const [y, m, d] = today.split("-").map(Number);

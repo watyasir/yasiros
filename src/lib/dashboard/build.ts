@@ -3,7 +3,7 @@ import { addDays, startingValue, type CheckInValues, type Tracker } from "@/lib/
 import type { DayPlan } from "@/lib/day-plan";
 import type { DashboardData, SeasonDay } from "@/modules/types";
 import type { BodyCheck, Workout } from "@/lib/body";
-import { dueState, heldTasks, type Goal, type Task } from "@/lib/tasks";
+import type { Goal, Task } from "@/lib/tasks";
 import { toMoneyTile, type MoneySnapshot } from "@/lib/money";
 import { buildBody } from "./body";
 import { buildGoals } from "./goals";
@@ -121,12 +121,6 @@ export function buildDashboardData({
     weekTarget: workoutTracker?.target_period === "weekly" && workoutTracker.target != null ? Number(workoutTracker.target) : null,
   });
 
-  // On-hold tasks (not started yet, or on a goal that hasn't) stay out of the counts.
-  const held = heldTasks(tasks, goals, today);
-  const open = tasks.filter((t) => t.status !== "done" && !held.has(t.id));
-  const overdue = open.filter((t) => dueState(t, today) === "overdue").length;
-  const dueToday = open.filter((t) => t.due === today).length;
-
   const loggedDays = new Set(entries.map((e) => e.entry_date));
   const series = buildSeries(trackers, valueOn, bodyChecks, today);
   const consistency = buildConsistency(season, trackers, valueOn, today);
@@ -142,13 +136,10 @@ export function buildDashboardData({
       overview: { title: "", subtitle: "" },
       health: { title: "Health", subtitle: season ? `Winter Arc · ${season.name}` : "Weight, sleep, workouts, meals and blood pressure" },
       finance: { title: "Finance", subtitle: money ? `${money.month} · updated by the finance task` : "Waiting for the first snapshot" },
-      work: {
-        title: "Work",
-        subtitle: open.length === 0 ? "No open tasks" : `${open.length} open${overdue ? ` · ${overdue} overdue` : ""}${dueToday ? ` · ${dueToday} due today` : ""}`,
-      },
+      // The counts are worked out on the page from the live task list (openTasks, workSummary).
+      work: { title: "Work", subtitle: "" },
       gallery: { title: "Gallery", subtitle: "Images and files Claude saved from chats" },
     },
-    navBadges: open.length ? { work: String(open.length) } : {},
     season: season ? buildSeason(season, today, dayStatus, counts, dailyGoals.length) : null,
     arc: season ? buildArc(season, today, trackers, dailyGoals, hitOn) : null,
     hero: buildHero(season, today, loggedDays, consistency),

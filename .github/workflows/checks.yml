@@ -29,6 +29,8 @@ jobs:
         run: npm run privacy-check -- --all
       - name: Contrast (all 3 themes)
         run: npm run contrast
+      - name: Unit tests
+        run: npm test
       - name: Lint
         run: npm run lint
       - name: Build

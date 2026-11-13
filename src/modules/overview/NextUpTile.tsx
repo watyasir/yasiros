@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Tile } from "@/components/Tile";
 import { useDashboard } from "@/components/dashboard/DashboardContext";
 import { viewHref } from "@/components/dashboard/Nav";
-import { heldTasks, type Task } from "@/lib/tasks";
+import { openTasks, type Task } from "@/lib/tasks";
 import { DueChip } from "@/modules/work/DueChip";
 import { OwnerChip } from "@/modules/work/OwnerChip";
 import { useTick } from "@/modules/work/useTick";
@@ -23,8 +23,7 @@ export function NextUpTile() {
   const [leaving, setLeaving] = useState<string[]>([]);
   const today = data.todayISO;
   // On-hold tasks (start date still ahead, or their goal's) wait on the Work page.
-  const held = heldTasks(tasks, data.goals, today);
-  const open = tasks.filter((t) => t.status !== "done" && !held.has(t.id));
+  const open = openTasks(tasks, data.goals, today);
   const next = [...open]
     .sort((a, b) => Number(!overdue(a, today)) - Number(!overdue(b, today)) || (a.due ?? "9999").localeCompare(b.due ?? "9999") || b.order - a.order)
     .slice(0, 3);

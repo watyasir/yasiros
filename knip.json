@@ -2,7 +2,8 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
     "public/sw.js",
-    "scripts/*.mjs"
+    "scripts/*.mjs",
+    "tests/*.test.mjs"
   ],
   "ignoreDependencies": [
     "server-only"

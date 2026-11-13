@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
+import { openTasks } from "@/lib/tasks";
 import type { ViewId } from "@/modules/types";
 import { useDashboard } from "./DashboardContext";
 
@@ -40,7 +41,9 @@ function Actions() {
 
 /** Top of every page: the 4 tabs from 561px up, or the Decko mark and name on a phone (the tab bar is at the bottom there), then Check-in and Settings. */
 export function TopBar() {
-  const { data, view } = useDashboard();
+  const { data, view, tasks } = useDashboard();
+  // Open, not on hold: the same count as the Work subtitle and the goal cards, live as tasks are ticked.
+  const openWork = openTasks(tasks, data.goals, data.todayISO).length;
   return (
     <header className="no-select flex items-center gap-3">
       <Link href={viewHref(data.basePath, "overview")} className="flex min-h-11 items-center gap-2 text-ink no-underline min-[561px]:hidden">
@@ -59,7 +62,7 @@ export function TopBar() {
             }`}
           >
             {t.label}
-            {t.id === "work" && data.navBadges.work && <span className="font-mono text-xs text-soft">{data.navBadges.work}</span>}
+            {t.id === "work" && openWork > 0 && <span className="font-mono text-xs text-soft">{openWork}</span>}
           </Link>
         ))}
       </nav>

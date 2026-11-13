@@ -20,6 +20,8 @@ export interface CardModel {
   /** null = the Loose tasks card. */
   goalId: string | null;
   tasks: Task[];
+  /** Open tasks (not done, not on hold, openTasks): they add up to the Work tab's number. */
+  open: Task[];
   /** Open tasks that haven't started (their own start date, or the goal's), with that date. */
   held: { task: Task; start: string }[];
   /** The goal's start date while it's on hold, else null. */
@@ -41,8 +43,7 @@ export function GoalCard({ card, onOpen, onAdd }: { card: CardModel; onOpen: (t:
   const tick = useTick();
   const [all, setAll] = useState(false);
   const [opened, setOpened] = useState(false);
-  const heldIds = new Set(card.held.map((h) => h.task.id));
-  const open = card.tasks.filter((t) => t.status !== "done" && !heldIds.has(t.id)).sort(byDue);
+  const open = [...card.open].sort(byDue);
   const done = card.tasks.filter((t) => t.status === "done").length;
   const shown = all ? open : open.slice(0, SHOWN);
 
@@ -73,7 +74,7 @@ export function GoalCard({ card, onOpen, onAdd }: { card: CardModel; onOpen: (t:
           </div>
         </div>
         <span className="text-xs font-semibold text-soft">
-          {card.tasks.length ? `${done} of ${card.tasks.length} tasks done` : "No tasks yet"}
+          {card.tasks.length ? `${done} of ${card.tasks.length} tasks done${open.length ? ` · ${open.length} open` : ""}` : "No tasks yet"}
         </span>
       </div>
       {open.length === 0 && card.held.length === 0 && card.tasks.length > 0 && <p className="m-0 text-sm font-semibold">All done ✓</p>}

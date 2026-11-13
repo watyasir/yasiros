@@ -44,10 +44,9 @@ export const demoData: DashboardData = {
     overview: { title: "", subtitle: "" },
     health: { title: "Health", subtitle: "Sample data · Winter Arc day 23 of 90" },
     finance: { title: "Finance", subtitle: "October · sample accounts" },
-    work: { title: "Work", subtitle: "Sample data · 11 open · 2 overdue" },
+    work: { title: "Work", subtitle: "Sample data" },
     gallery: { title: "Gallery", subtitle: "Images and files Claude saved from chats" },
   },
-  navBadges: { work: "11" },
   season: {
     startsIn: 0,
     name: "Winter Arc",
